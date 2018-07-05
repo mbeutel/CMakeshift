@@ -59,6 +59,9 @@ install(
     FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config-install.cmake"
     RENAME "${PROJECT_NAME}Config.cmake"
     DESTINATION "${RELATIVE_CONFIG_INSTALL_DIR}")
+install(
+    FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
+    DESTINATION "${RELATIVE_CONFIG_INSTALL_DIR}")
 
 
 # Install method #2: Put package build directory into local CMake registry. This allows the detection and use

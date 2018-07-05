@@ -10,10 +10,3 @@ else()
     # This is an exported build directory; the modules reside at their original locations.
     list(APPEND CMAKE_MODULE_PATH "@INTERFACE_MODULE_PATH@/cmake")
 endif()
-
-# Restore original module path.
-set(CMAKE_MODULE_PATH "${@PROJECT_NAME@_ORIGINAL_CMAKE_MODULE_PATH}")
-
-# Import targets.
-include("${@PROJECT_NAME@_CURRENT_CONFIG_DIR}/@PROJECT_NAME@Targets.cmake")
-
