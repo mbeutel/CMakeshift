@@ -13,8 +13,6 @@ cmake_minimum_required(VERSION 3.8)
 set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
-include(CMakeshift/CMakeshift.cmake)
-
 # Define the project.
 set(CMakeshift_VERSION 1.0.0)
 project(CMakeshift
@@ -40,13 +38,13 @@ write_basic_package_version_file("${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVer
 
 # Install method #1: Put library in CMAKE_INSTALL_PREFIX, i.e. /usr/local or equivalent.
 
+# Determine the install path for the *Config.cmake configuration file relative to CMAKE_INSTALL_PREFIX.
+set(RELATIVE_CONFIG_INSTALL_DIR "${PROJECT_NAME}-${PROJECT_VERSION}/share/${PROJECT_NAME}-${PROJECT_VERSION}/cmake")
+
 # Install CMake modules.
 install(
     DIRECTORY "cmake/"
     DESTINATION "${RELATIVE_CONFIG_INSTALL_DIR}/cmake/")
-
-# Determine the install path for the *Config.cmake configuration file relative to CMAKE_INSTALL_PREFIX.
-set(RELATIVE_CONFIG_INSTALL_DIR "${PROJECT_NAME}-${PROJECT_VERSION}/share/${PROJECT_NAME}-${PROJECT_VERSION}/cmake")
 
 # Configure a *Config.cmake file for an installed version of the package from the template, reflecting the
 # current build options.
