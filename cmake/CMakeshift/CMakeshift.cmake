@@ -1,6 +1,8 @@
 # CMakeshift.cmake
 # Author: Moritz Beutel
 
+# make CMakeshift script directory accessible to expose the find modules in the "modules" subdirectory
+set(CMAKESHIFT_DIR "${CMAKE_CURRENT_LIST_DIR}")
 
 # set CMAKESHIFT_LIB_SUFFIX to "64" for 64-bit Linux distributions except for Debian and Arch
 if(CMAKE_SYSTEM_NAME MATCHES "Linux"
