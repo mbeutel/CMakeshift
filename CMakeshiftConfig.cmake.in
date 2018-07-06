@@ -8,5 +8,5 @@ if(@SETUP_PACKAGE_CONFIG_FOR_INSTALLATION@)
     list(APPEND CMAKE_MODULE_PATH "${@PROJECT_NAME@_CURRENT_CONFIG_DIR}/cmake")
 else()
     # This is an exported build directory; the modules reside at their original locations.
-    list(APPEND CMAKE_MODULE_PATH "@INTERFACE_MODULE_PATH@/cmake")
+    list(APPEND CMAKE_MODULE_PATH "@INTERFACE_MODULE_PATH@")
 endif()

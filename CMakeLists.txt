@@ -70,9 +70,13 @@ install(
 if(EXPORT_BUILD_DIR AND NOT CMAKE_EXPORT_NO_PACKAGE_REGISTRY)
     message("-- Exporting ${PROJECT_NAME} build directory to local CMake package registry.")
     
+    # Export the project build directory as a package into the local CMake package registry.
+    export(PACKAGE ${PROJECT_NAME})
+                                
     # Configure a *Config.cmake file for the export of the build directory from the template, reflecting the
     # current build options.
     set(SETUP_PACKAGE_CONFIG_FOR_INSTALLATION FALSE)
     configure_file("${PROJECT_NAME}Config.cmake.in"
         "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" @ONLY)
 endif()
+
