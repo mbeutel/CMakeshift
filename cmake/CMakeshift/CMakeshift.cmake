@@ -2,7 +2,7 @@
 # Author: Moritz Beutel
 
 # make CMakeshift script directory accessible to expose the find modules in the "modules" subdirectory
-set(CMAKESHIFT_DIR "${CMAKE_CURRENT_LIST_DIR}")
+set(CMAKESHIFT_MODULE_DIR "${CMAKE_CURRENT_LIST_DIR}/modules")
 
 # set CMAKESHIFT_LIB_SUFFIX to "64" for 64-bit Linux distributions except for Debian and Arch
 if(CMAKE_SYSTEM_NAME MATCHES "Linux"
@@ -99,55 +99,4 @@ function(CMAKESHIFT_INSTALL_FIND_MODULES)
             FILES "${_MK_MODULE_DIR}/Find${MODULE}.cmake"
             DESTINATION "${_MK_IFM_DESTINATION}")
     endforeach()
-endfunction()
-
-# discover unit tests using the Catch testing framework
-function(CMAKESHIFT_DISCOVER_CATCH_TESTS TEST_TARGET)
-    target_compile_definitions(${TEST_TARGET}
-        PRIVATE USE_CATCH)
-    get_target_property(SRC_FILES ${TEST_TARGET} SOURCES)
-    foreach(SRC_FILE IN ITEMS ${SRC_FILES})
-        _cmakeshift_discover_catch_tests_in_file("${SRC_FILE}" ${TEST_TARGET})
-    endforeach()
-    set(ALL_CATCH_TESTS "${ALL_CATCH_TESTS}" PARENT_SCOPE)
-    set(HIDDEN_CATCH_TESTS "${HIDDEN_CATCH_TESTS}" PARENT_SCOPE)
-  
-    set(TestTargetLocation "$<TARGET_FILE:${TEST_TARGET}>")
-    set(UnquotedTests "")
-    foreach(Test IN LISTS ALL_CATCH_TESTS)
-        string(REGEX REPLACE "^\"(.*)\"$" "\\1" UnquotedTest "${Test}")
-        list(APPEND UnquotedTests "${UnquotedTest}")
-    endforeach()
-    configure_file("${ADDCATCHTESTS_LIST_DIR_}/CheckAllTestsFound.cmake.in"
-        "${PROJECT_BINARY_DIR}/${PROJECT_NAME}_${TEST_TARGET}_CheckAllTestsFound.cmake" @ONLY)
-    file(WRITE "${PROJECT_BINARY_DIR}/RediscoverTestsMarker.cmake" "")
-    include("${PROJECT_BINARY_DIR}/RediscoverTestsMarker.cmake")
-    add_custom_command(TARGET ${TEST_TARGET}
-        POST_BUILD
-        COMMAND "${CMAKE_COMMAND}" "-DTEST_TARGET_LOCATION=\"$<TARGET_FILE:${TEST_TARGET}>\"" -P "${PROJECT_BINARY_DIR}/${PROJECT_NAME}_${TEST_TARGET}_CheckAllTestsFound.cmake")
-endfunction()
-
-function(_CMAKESHIFT_DISCOVER_CATCH_TESTS_IN_FILE SRC_FILE TEST_TARGET)
-    # TODO
-endfunction()
-
-
-function(CMAKESHIFT_DISCOVER_CATCH_TESTS TEST_TARGET)
-    set(oneValueArgs WORKING_DIRECTORY)
-    cmake_parse_arguments(CMAKESHIFT_DISCOVER_CATCH_TESTS "" "${oneValueArgs}" "" ${ARGN})
-
-    execute_process(COMMAND "${TEST_TARGET}" --list-test-names-only
-        RESULT_VARIABLE RESULT
-        OUTPUT_VARIABLE TEST_NAMES)
-    if(RESULT EQUAL 0)
-        string(REGEX REPLACE "\n" ";" TEST_NAME_LIST "${TEST_NAMES}")
-        foreach(TEST_NAME IN LISTS TEST_NAME_LIST)
-            add_test(
-                NAME tests
-                COMMAND tests "\"${TEST_NAME}\""
-                WORKING_DIRECTORY "${CMAKESHIFT_DISCOVER_CATCH_TESTS_WORKING_DIRECTORY}")
-        endforeach(TEST_NAME)
-    else()
-        message(FATAL_ERROR "Unable to discover tests; are you using Catch?\nTest runner output:\n${TEST_NAMES}")
-    endif()
 endfunction()

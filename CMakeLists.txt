@@ -1,3 +1,4 @@
+
 # CMakeshift
 # Author: Moritz Beutel
 
@@ -21,10 +22,6 @@ project(CMakeshift
 
 # Define build options.
 option(EXPORT_BUILD_DIR "Export build directory using CMake (enables external use without install)" OFF)
-
-# Define the module path that is to be prepended for dependent projects.
-set(INTERFACE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
-
 
 
 ## 2. Installation
@@ -79,4 +76,3 @@ if(EXPORT_BUILD_DIR AND NOT CMAKE_EXPORT_NO_PACKAGE_REGISTRY)
     configure_file("${PROJECT_NAME}Config.cmake.in"
         "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" @ONLY)
 endif()
-
