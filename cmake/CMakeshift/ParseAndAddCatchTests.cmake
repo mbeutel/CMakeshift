@@ -1,3 +1,6 @@
+
+# CMakeshift
+#
 # Original source:
 # https://github.com/catchorg/Catch2/blob/master/contrib/ParseAndAddCatchTests.cmake
 # Distributed under the Boost license. See accompanying file LICENSE.txt for details.

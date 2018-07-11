@@ -1,3 +1,4 @@
+
 # Get the directory containing this file.
 get_filename_component(@PROJECT_NAME@_CURRENT_CONFIG_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 
@@ -9,4 +10,3 @@ else()
     # This is an exported build directory; the modules reside at their original locations.
     list(APPEND CMAKE_MODULE_PATH "@PROJECT_SOURCE_DIR@/cmake")
 endif()
-
