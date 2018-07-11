@@ -6,7 +6,7 @@
 ## 1. Prologue and public interface
 ## ================================
 
-cmake_minimum_required(VERSION 3.8)
+cmake_minimum_required(VERSION 3.10)
 
 # Disable in-source builds to avoid cluttering the source directory.
 # If you attempted to build in the source directory and run into this error, you first need to clean up
@@ -36,7 +36,7 @@ write_basic_package_version_file("${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVer
 # Install method #1: Put library in CMAKE_INSTALL_PREFIX, i.e. /usr/local or equivalent.
 
 # Determine the install path for the *Config.cmake configuration file relative to CMAKE_INSTALL_PREFIX.
-set(RELATIVE_CONFIG_INSTALL_DIR "${PROJECT_NAME}-${PROJECT_VERSION}/share/${PROJECT_NAME}-${PROJECT_VERSION}/cmake")
+set(RELATIVE_CONFIG_INSTALL_DIR "share/cmake/${PROJECT_NAME}-${PROJECT_VERSION}")
 
 # Install CMake modules.
 install(
