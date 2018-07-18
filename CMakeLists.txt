@@ -41,7 +41,7 @@ set(RELATIVE_CONFIG_INSTALL_DIR "share/cmake/${PROJECT_NAME}-${PROJECT_VERSION}"
 # Install CMake modules.
 install(
     DIRECTORY "cmake/"
-    DESTINATION "${RELATIVE_CONFIG_INSTALL_DIR}/cmake/")
+    DESTINATION "${RELATIVE_CONFIG_INSTALL_DIR}/cmake")
 
 # Configure a *Config.cmake file for an installed version of the package from the template, reflecting the
 # current build options.
