@@ -8,18 +8,21 @@
 #
 # Look for the header file in the project's external include directory and in the system include directories.
 # GSL may reside in a system include directory if it has been installed with vcpkg.
-find_path(MS-GSL_INCLUDE_DIR "gsl/gsl_algorithm"
-    PATHS "${PROJECT_SOURCE_DIR}/external"
-    PATH_SUFFIXES "/include")
-if(MS-GSL_INCLUDE_DIR)
-    set(MS-GSL_INCLUDE_DIRS "${MS-GSL_INCLUDE_DIR}")
-endif()
 
-# If the header file has been found, define an imported target for it.
-if(MS-GSL_INCLUDE_DIRS)
-    add_library(MS-GSL::MS-GSL INTERFACE IMPORTED)
-    set_target_properties(MS-GSL::MS-GSL PROPERTIES
-        INTERFACE_INCLUDE_DIRECTORIES "${MS-GSL_INCLUDE_DIRS}")
+# If the header file has been found and no target is defined yet, define an imported target for it.
+if(NOT TARGET MS-GSL::MS-GSL)
+    find_path(MS-GSL_INCLUDE_DIR "gsl/gsl_algorithm"
+        PATHS "${PROJECT_SOURCE_DIR}/external"
+        PATH_SUFFIXES "/include")
+    if(MS-GSL_INCLUDE_DIR)
+        set(MS-GSL_INCLUDE_DIRS "${MS-GSL_INCLUDE_DIR}")
+    endif()
+
+    if(MS-GSL_INCLUDE_DIRS)
+        add_library(MS-GSL::MS-GSL INTERFACE IMPORTED)
+        set_target_properties(MS-GSL::MS-GSL PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${MS-GSL_INCLUDE_DIRS}")
+    endif()
 endif()
 
 include(FindPackageHandleStandardArgs)
