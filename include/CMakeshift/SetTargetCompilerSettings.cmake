@@ -11,6 +11,12 @@
 #
 function(CMAKESHIFT_SET_TARGET_COMPILER_SETTINGS TARGET_NAME)
 
+    function(CMAKESHIFT_UPDATE_CACHE_VARIABLE_ VAR_NAME VALUE)
+        get_property(HELP_STRING CACHE ${VAR_NAME} PROPERTY HELPSTRING)
+        get_property(VAR_TYPE CACHE ${VAR_NAME} PROPERTY TYPE)
+        set(${VAR_NAME} ${VALUE} CACHE ${VAR_TYPE} "${HELP_STRING}" FORCE)
+    endfunction()
+
     function(CMAKESHIFT_SET_TARGET_COMPILER_SETTING_ TARGET_NAME SCOPE OPTION0)
         string(TOLOWER "${OPTION0}" OPTION)
         if(OPTION STREQUAL "default")
@@ -31,7 +37,8 @@ function(CMAKESHIFT_SET_TARGET_COMPILER_SETTINGS TARGET_NAME)
             if(MSVC)
                 # remove "/Wx" from CMAKE_CXX_FLAGS if present, as VC++ doesn't tolerate more than one "/Wx" flag
                 if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-                    string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+                    string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS_NEW "${CMAKE_CXX_FLAGS}")
+                    cmakeshift_update_cache_variable_(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_NEW}")
                 endif()
                 target_compile_options(${TARGET_NAME} ${SCOPE} "/W4")
             elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
