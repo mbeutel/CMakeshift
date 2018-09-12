@@ -15,9 +15,8 @@ set(CMAKE_DISABLE_SOURCE_CHANGES ON)
 set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 # Define the project.
-set(CMakeshift_VERSION 1.2.1)
 project(CMakeshift
-    VERSION ${CMakeshift_VERSION}
+    VERSION 2.0.0
     LANGUAGES)
 
 # Define build options.
