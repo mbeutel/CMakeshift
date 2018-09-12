@@ -5,13 +5,14 @@
 
 
 # Set the target machine architecture. Supported values for ARCH:
-# 
-#     "Default"                 don't generate architecture-specific code
-#     "Penryn"                  generate code for Intel Core 2 Refresh "Penryn"
-#     "Skylake"                 generate code for Intel Core/Xeon "Skylake"
-#     "Skylake-Server"          generate code for Intel Core/Xeon "Skylake Server"
-#     "Skylake-Server-AVX512"   generate code for Intel Core/Xeon "Skylake Server", prefer AVX-512 instructions
-#     "KNL"                     generate code for Intel Xeon Phi "Knights Landing"
+#
+#     default                   don't generate architecture-specific code
+#     penryn                    generate code for Intel Core 2 Refresh "Penryn"
+#     skylake                   generate code for Intel Core/Xeon "Skylake"
+#     skylake-server            generate code for Intel Core/Xeon "Skylake Server"
+#     skylake-server-avx512     generate code for Intel Core/Xeon "Skylake Server", prefer AVX-512 instructions
+#     knl                       generate code for Intel Xeon Phi "Knights Landing"
+#
 function(CMAKESHIFT_SET_TARGET_ARCHITECTURE TARGETNAME ARCH)
     string(TOLOWER "${ARCH}" ARCH_LOWERCASE)
     if(ARCH AND NOT (ARCH_LOWERCASE STREQUAL "default"))
@@ -56,11 +57,11 @@ function(CMAKESHIFT_SET_TARGET_ARCHITECTURE TARGETNAME ARCH)
             if(ARCH_LOWERCASE STREQUAL "penryn")
                 target_compile_options(${TARGETNAME} PRIVATE "${ARCHARG}sse4.1" "${XARG}sse4.1")
             elseif(ARCH_LOWERCASE STREQUAL "skylake")
-                target_compile_options(${TARGETNAME} PRIVATE "${ARCHARG2}core-avx2" "${XARG}code-avx2")
+                target_compile_options(${TARGETNAME} PRIVATE "${ARCHARG2}core-avx2" "${XARG}core-avx2")
             elseif(ARCH_LOWERCASE STREQUAL "skylake-server")
-                target_compile_options(${TARGETNAME} PRIVATE "${ARCHARG2}core-avx2" "${XARG}code-avx512")
+                target_compile_options(${TARGETNAME} PRIVATE "${ARCHARG2}core-avx2" "${XARG}core-avx512")
             elseif(ARCH_LOWERCASE STREQUAL "skylake-server-avx512")
-                target_compile_options(${TARGETNAME} PRIVATE "${ARCHARG2}core-avx2" "${XARG}code-avx512" "${QARG}opt-zmm-usage${ASGN}high")
+                target_compile_options(${TARGETNAME} PRIVATE "${ARCHARG2}core-avx2" "${XARG}core-avx512" "${QARG}opt-zmm-usage${ASGN}high")
             elseif(ARCH_LOWERCASE STREQUAL "knl")
                 target_compile_options(${TARGETNAME} PRIVATE "${ARCHARG2}core-avx2" "${XARG}mic-avx512")
             else()

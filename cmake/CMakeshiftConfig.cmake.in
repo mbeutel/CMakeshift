@@ -1,3 +1,4 @@
+
 # Get the directory containing this file.
 get_filename_component(@PROJECT_NAME@_CURRENT_CONFIG_DIR "${CMAKE_CURRENT_LIST_FILE}" PATH)
 
@@ -6,11 +7,11 @@ if(@SETUP_PACKAGE_CONFIG_FOR_INSTALLATION@)
     set(CMAKESHIFT_SCRIPT_DIR "${@PROJECT_NAME@_CURRENT_CONFIG_DIR}/cmake")
 else()
     # This is an exported build directory; the modules reside at their original locations.
-    set(CMAKESHIFT_SCRIPT_DIR "@PROJECT_SOURCE_DIR@/cmake")
+    set(CMAKESHIFT_SCRIPT_DIR "@PROJECT_SOURCE_DIR@/include")
 endif()
 
 # Adjust module path so that CMakeshift scripts are found by libraries using this package.
 list(APPEND CMAKE_MODULE_PATH "${CMAKESHIFT_SCRIPT_DIR}")
 
-# make CMakeshift find module directory accessible to expose the find modules in the "modules" subdirectory
-set(CMAKESHIFT_MODULE_DIR "${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/modules")
+# Add the CMakeshift find module path to the module path.
+list(APPEND CMAKE_MODULE_PATH "${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/modules")
