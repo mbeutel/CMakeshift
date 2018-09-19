@@ -22,14 +22,31 @@ function(CMAKESHIFT_SET_TARGET_COMPILER_SETTINGS TARGET_NAME)
         if(OPTION STREQUAL "default")
             # default options everyone can agree on
             if(MSVC)
-                # enable permissive mode (prefer already rejuvenated parts of compiler for better conformance)
-                target_compile_options(${TARGET_NAME} ${SCOPE} "/permissive-")
-
-                # enable Just My Code for debugging convenience
-                target_compile_options(${TARGET_NAME} ${SCOPE} "/JMC")
-
                 # make `volatile` behave as specified by the language standard, as opposed to the quasi-atomic semantics VC++ implements by default
                 target_compile_options(${TARGET_NAME} ${SCOPE} "/volatile:iso")
+
+                # remove unreferenced COMDATs to improve linker throughput
+                target_compile_options(${TARGET_NAME} ${SCOPE} "/Zc:inline") # available since pre-modern VS 2013 Update 2
+
+                # enable permissive mode (prefer already rejuvenated parts of compiler for better conformance)
+                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 19.10)
+                    target_compile_options(${TARGET_NAME} ${SCOPE} "/permissive-") # available since VS 2017 15.0
+                endif()
+
+                # enable "extern constexpr" support
+                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 19.13)
+                    target_compile_options(${TARGET_NAME} ${SCOPE} "/Zc:externConstexpr") # available since VS 2017 15.6
+                endif()
+
+                # enable updated __cplusplus macro value
+                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 19.14)
+                    target_compile_options(${TARGET_NAME} ${SCOPE} "/Zc:__cplusplus") # available since VS 2017 15.7
+                endif()
+
+                # enable Just My Code for debugging convenience
+                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 19.15)
+                    target_compile_options(${TARGET_NAME} ${SCOPE} "/JMC") # available since VS 2017 15.8
+                endif()
             endif()
 
         elseif(OPTION STREQUAL "pedantic")
