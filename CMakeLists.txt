@@ -35,6 +35,7 @@ add_subdirectory(src)
 
 # Generate package version file.
 include(CMakePackageConfigHelpers)
+set(CMAKE_SIZEOF_VOID_P "") # CMakeshift is a CMake script library and doesn't care about target architecture
 write_basic_package_version_file("${PROJECT_BINARY_DIR}/${PROJECT_NAME}ConfigVersion.cmake"
     VERSION ${PROJECT_VERSION}
     COMPATIBILITY SameMajorVersion)
