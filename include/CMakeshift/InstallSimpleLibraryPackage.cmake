@@ -106,9 +106,9 @@ function(CMAKESHIFT_INSTALL_SIMPLE_LIBRARY_PACKAGE)
         export(
             PACKAGE ${SCOPE_PROJECT})
     
-        # If not using a multi-config generator, configure a *ConfigVersion.cmake file which checks that build
-        # configurations match when referencing exported build directories. This works only if all locally built
-        # projects use the same config generator kind (single or multi).
+        # Configure a *ConfigVersion.cmake file which includes the generic version checking file generated above
+        # and additionally checks that build configurations match when referencing exported build directories when
+        # not using a multi-config generator.
         configure_file("${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/templates/ConfigVersion-BuildType.cmake.in"
             "${SCOPE_PROJECT_BINARY_DIR}/${SCOPE_PROJECT}ConfigVersion.cmake" @ONLY)
         
