@@ -68,7 +68,7 @@ install(
 # of the package without requiring that it be installed.
 
 if(EXPORT_BUILD_DIR AND NOT CMAKE_EXPORT_NO_PACKAGE_REGISTRY)
-    message("-- Exporting ${PROJECT_NAME} build directory to local CMake package registry.")
+    message(STATUS "Exporting ${PROJECT_NAME} build directory to local CMake package registry.")
     
     # Export the project build directory as a package into the local CMake package registry.
     export(PACKAGE ${PROJECT_NAME})

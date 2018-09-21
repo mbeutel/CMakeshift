@@ -9,8 +9,7 @@ option(EXPORT_BUILD_DIR "Export build directory using CMake (enables external us
 
 
 # Get the CMakeshift script include directory.
-get_filename_component(CMAKESHIFT_SCRIPT_DIR "${CMAKE_CURRENT_LIST_FILE}" DIRECTORY)
-get_filename_component(CMAKESHIFT_SCRIPT_DIR "${CMAKESHIFT_SCRIPT_DIR}" DIRECTORY)
+get_filename_component(CMAKESHIFT_SCRIPT_DIR "${CMAKE_CURRENT_LIST_DIR}" DIRECTORY)
 
 
 # Install library package with the given exports.
@@ -92,7 +91,7 @@ function(CMAKESHIFT_INSTALL_SIMPLE_LIBRARY_PACKAGE)
     # of the package without requiring that it be installed.
 
     if(EXPORT_BUILD_DIR AND NOT CMAKE_EXPORT_NO_PACKAGE_REGISTRY)
-        message("-- Exporting ${PROJECT_NAME} build directory to local CMake package registry.")
+        message(STATUS "Exporting ${PROJECT_NAME} build directory to local CMake package registry.")
     
         # Analogously to install(EXPORT ...), export the targets from the build directory to a *Targets.cmake file.
         if(SCOPE_EXPORT)
