@@ -1,40 +1,37 @@
+
+# FindNuma
+# --------
 #
-# Copied from caffe2 and modified to expose a proper imported target
+# Find the Numa Library.
 #
-# Find the Numa libraries
-#
-# The following variables are optionally searched for defaults
-#  NUMA_ROOT_DIR:    Base directory where all Numa components are found
-#
-# The following are set after configuration is done:
-#  NUMA_FOUND
-#  Numa_INCLUDE_DIR
-#  Numa_LIBRARIES
+# Look for the header file in the project's external include directory, in the NUMA_ROOT_DIR directory,
+# and in the system include directories.
 
+find_path(Numa_INCLUDE_DIR
+    NAMES numa.h
+    PATHS "${PROJECT_SOURCE_DIR}/external" "${NUMA_ROOT_DIR}"
+    PATH_SUFFIXES "/include")
+find_library(Numa_LIBRARY
+    NAMES numa
+    PATHS "${PROJECT_SOURCE_DIR}/external" "${NUMA_ROOT_DIR}"
+    PATH_SUFFIXES "/lib" "/lib64")
 
-if( NOT TARGET Numa::Numa )
-  find_path(
-      Numa_INCLUDE_DIR NAMES numa.h
-      PATHS ${NUMA_ROOT_DIR} ${NUMA_ROOT_DIR}/include)
+include(FindPackageHandleStandardArgs)
+find_package_handle_standard_args(Numa REQUIRED_VARS Numa_INCLUDE_DIR Numa_LIBRARY)
 
-  find_library(
-      Numa_LIBRARIES NAMES numa
-      PATHS ${NUMA_ROOT_DIR} ${NUMA_ROOT_DIR}/lib)
+if(Numa_FOUND)
+    set(Numa_INCLUDE_DIRS "${Numa_INCLUDE_DIR}")
+    set(Numa_LIBRARIES "${Numa_LIBRARY}")
 
-  include(FindPackageHandleStandardArgs)
-  find_package_handle_standard_args(
-      Numa DEFAULT_MSG Numa_INCLUDE_DIR Numa_LIBRARIES)
+    # Define a target only if none has been defined yet.
+    if(NOT TARGET Numa::Numa)
+        add_library(Numa::Numa INTERFACE IMPORTED)
+        set_target_properties(Numa::Numa PROPERTIES
+            INTERFACE_INCLUDE_DIRECTORIES "${Numa_INCLUDE_DIRS}"
+            INTERFACE_LINK_LIBRARIES      "${Numa_LIBRARIES}")
 
-
-  if(NUMA_FOUND)
-    add_library( Numa::Numa INTERFACE IMPORTED )
-    set_target_properties( Numa::Numa PROPERTIES
-      INTERFACE_INCLUDE_DIRECTORIES "${Numa_INCLUDE_DIR}"
-      INTERFACE_LINK_LIBRARIES      "${Numa_LIBRARIES}"
-      )
-    message(
-        STATUS
-        "Found Numa  (include: ${Numa_INCLUDE_DIR}, library: ${Numa_LIBRARIES})")
-    mark_as_advanced(Numa_INCLUDE_DIR Numa_LIBRARIES)
-  endif()
+        message(STATUS "Found Numa (find module at ${CMAKE_CURRENT_LIST_DIR}, headers at ${Numa_INCLUDE_DIRS}, library at ${Numa_LIBRARIES})")
+    endif()
 endif()
+
+mark_as_advanced(Numa_INCLUDE_DIR Numa_LIBRARY)
