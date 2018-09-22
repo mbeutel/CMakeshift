@@ -1,4 +1,5 @@
 
+#.rst:
 # FindNuma
 # --------
 #
@@ -6,6 +7,18 @@
 #
 # Look for the header file in the project's external include directory, in the NUMA_ROOT_DIR directory,
 # and in the system include directories.
+#
+# This will define the following variables::
+#
+#   Numa_FOUND    - True if the Numa library was found
+#
+# and the following imported targets::
+#
+#   Numa::Numa    - The Numa library
+#
+# The following macros can be defined prior to using this find module:
+#
+#   NUMA_ROOT_DIR - AOptional path where to search for Numa
 
 find_path(Numa_INCLUDE_DIR
     NAMES numa.h
@@ -30,7 +43,9 @@ if(Numa_FOUND)
             INTERFACE_INCLUDE_DIRECTORIES "${Numa_INCLUDE_DIRS}"
             INTERFACE_LINK_LIBRARIES      "${Numa_LIBRARIES}")
 
-        message(STATUS "Found Numa (find module at ${CMAKE_CURRENT_LIST_DIR}, headers at ${Numa_INCLUDE_DIRS}, library at ${Numa_LIBRARIES})")
+        if(NOT Numa_FIND_QUIETLY)
+            message(STATUS "Found Numa (find module at ${CMAKE_CURRENT_LIST_DIR}, headers at ${Numa_INCLUDE_DIRS}, library at ${Numa_LIBRARIES})")
+        endif()
     endif()
 endif()
 

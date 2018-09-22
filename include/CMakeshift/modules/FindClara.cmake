@@ -1,10 +1,19 @@
 
+#.rst:
 # FindClara
 # ---------
 #
 # Find the Clara header-only command-line parsing library.
 #
 # Look for the header file in the project's external include directory and in the system include directories.
+#
+# This will define the following variables::
+#
+#   Clara_FOUND    - True if the Clara library was found
+#
+# and the following imported targets::
+#
+#   Clara::Clara   - The Clara library
 
 find_path(Clara_INCLUDE_DIR
     NAMES clara.hpp
@@ -23,7 +32,9 @@ if(Clara_FOUND)
         set_target_properties(Clara::Clara PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${Clara_INCLUDE_DIRS}")
 
-        message(STATUS "Found Clara (find module at ${CMAKE_CURRENT_LIST_DIR}, headers at ${Clara_INCLUDE_DIRS})")
+        if(NOT Clara_FIND_QUIETLY)
+            message(STATUS "Found Clara (find module at ${CMAKE_CURRENT_LIST_DIR}, headers at ${Clara_INCLUDE_DIRS})")
+        endif()
     endif()
 endif()
 
