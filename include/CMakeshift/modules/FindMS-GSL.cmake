@@ -1,4 +1,5 @@
 
+#.rst:
 # FindMS-GSL
 # ----------
 #
@@ -7,6 +8,14 @@
 # with the GNU Scientific Library, commonly abbreviated as "GSL".
 #
 # Look for the header file in the project's external include directory and in the system include directories.
+#
+# This will define the following variables::
+#
+#   MS-GSL_FOUND    - True if the MS-GSL library was found
+#
+# and the following imported targets::
+#
+#   MS-GSL::MS-GSL  - The MS-GSL library
 
 find_path(MS-GSL_INCLUDE_DIR
     NAMES "gsl/gsl_algorithm"
@@ -25,7 +34,9 @@ if(MS-GSL_FOUND)
         set_target_properties(MS-GSL::MS-GSL PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${MS-GSL_INCLUDE_DIRS}")
 
-        message(STATUS "Found MS-GSL (find module at ${CMAKE_CURRENT_LIST_DIR}, headers at ${MS-GSL_INCLUDE_DIRS})")
+        if(NOT MS-GSL_FIND_QUIETLY)
+            message(STATUS "Found MS-GSL (find module at ${CMAKE_CURRENT_LIST_DIR}, headers at ${MS-GSL_INCLUDE_DIRS})")
+        endif()
     endif()
 endif()
 

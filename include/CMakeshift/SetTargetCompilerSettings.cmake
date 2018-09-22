@@ -59,7 +59,7 @@ function(CMAKESHIFT_SET_TARGET_COMPILER_SETTINGS TARGET_NAME)
                 endif()
                 target_compile_options(${TARGET_NAME} ${SCOPE} "/W4")
             elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-                target_compile_options(${TARGET_NAME} ${SCOPE} "-Wall -Wextra -pedantic")
+                target_compile_options(${TARGET_NAME} ${SCOPE} "-Wall" "-Wextra" "-pedantic")
             endif()
 
         else()
