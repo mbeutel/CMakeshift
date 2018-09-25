@@ -16,6 +16,7 @@ get_filename_component(CMAKESHIFT_SCRIPT_DIR "${CMAKE_CURRENT_LIST_DIR}" DIRECTO
 #
 #     cmakeshift_install_simple_library_package(
 #         [PROJECT <project-name>]
+#         [NAMESPACE <namespace>]
 #         [EXPORT <export>]
 #         VERSION_COMPATIBILITY <AnyNewerVersion|ExactVersion|SameMajorVersion|SameMinorVersion>
 #         CONFIG_TEMPLATE <filename>)
@@ -38,6 +39,9 @@ function(CMAKESHIFT_INSTALL_SIMPLE_LIBRARY_PACKAGE)
     endif()
     if(NOT SCOPE_PROJECT)
         set(SCOPE_PROJECT ${PROJECT_NAME})
+    endif()
+    if(NOT SCOPE_NAMESPACE)
+        set(SCOPE_NAMESPACE ${SCOPE_PROJECT})
     endif()
 
     set(SCOPE_PROJECT_VERSION ${${SCOPE_PROJECT}_VERSION})
@@ -64,7 +68,7 @@ function(CMAKESHIFT_INSTALL_SIMPLE_LIBRARY_PACKAGE)
         install(
             EXPORT ${SCOPE_EXPORT}
             DESTINATION "${RELATIVE_CONFIG_INSTALL_DIR}"
-            NAMESPACE "${SCOPE_PROJECT}::"
+            NAMESPACE "${SCOPE_NAMESPACE}::"
             FILE ${SCOPE_PROJECT}Targets.cmake)
     endif()
 
@@ -97,7 +101,7 @@ function(CMAKESHIFT_INSTALL_SIMPLE_LIBRARY_PACKAGE)
         if(SCOPE_EXPORT)
             export(
                 EXPORT ${SCOPE_EXPORT}
-                NAMESPACE "${SCOPE_PROJECT}::"
+                NAMESPACE "${SCOPE_NAMESPACE}::"
                 FILE "${SCOPE_PROJECT_BINARY_DIR}/${SCOPE_PROJECT}Targets.cmake")
         endif()
 
