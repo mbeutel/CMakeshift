@@ -18,16 +18,14 @@
 #
 # The following macros can be defined prior to using this find module:
 #
-#   NUMA_ROOT_DIR - AOptional path where to search for Numa
+#   NUMA_ROOT     - Optional path where to search for Numa
 
 find_path(Numa_INCLUDE_DIR
     NAMES numa.h
-    PATHS "${PROJECT_SOURCE_DIR}/external" "${NUMA_ROOT_DIR}"
-    PATH_SUFFIXES "/include")
+    PATHS "${PROJECT_SOURCE_DIR}/external")
 find_library(Numa_LIBRARY
     NAMES numa
-    PATHS "${PROJECT_SOURCE_DIR}/external" "${NUMA_ROOT_DIR}"
-    PATH_SUFFIXES "/lib" "/lib64")
+    PATHS "${PROJECT_SOURCE_DIR}/external")
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Numa REQUIRED_VARS Numa_INCLUDE_DIR Numa_LIBRARY)

@@ -14,11 +14,14 @@
 # and the following imported targets::
 #
 #   Clara::Clara   - The Clara library
+#
+# The following macros can be defined prior to using this find module:
+#
+#   Clara_ROOT     - Optional path where to search for Clara
 
 find_path(Clara_INCLUDE_DIR
     NAMES clara.hpp
-    PATHS "${PROJECT_SOURCE_DIR}/external"
-    PATH_SUFFIXES "/include")
+    PATHS "${PROJECT_SOURCE_DIR}/external")
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Clara REQUIRED_VARS Clara_INCLUDE_DIR)
