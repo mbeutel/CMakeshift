@@ -32,22 +32,22 @@ function(CMAKESHIFT_SET_TARGET_COMPILER_SETTINGS TARGET_NAME)
                 target_compile_options(${TARGET_NAME} ${SCOPE} "/Zc:inline") # available since pre-modern VS 2013 Update 2
 
                 # enable permissive mode (prefer already rejuvenated parts of compiler for better conformance)
-                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 19.10)
+                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.10)
                     target_compile_options(${TARGET_NAME} ${SCOPE} "/permissive-") # available since VS 2017 15.0
                 endif()
 
                 # enable "extern constexpr" support
-                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 19.13)
+                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.13)
                     target_compile_options(${TARGET_NAME} ${SCOPE} "/Zc:externConstexpr") # available since VS 2017 15.6
                 endif()
 
                 # enable updated __cplusplus macro value
-                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 19.14)
+                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.14)
                     target_compile_options(${TARGET_NAME} ${SCOPE} "/Zc:__cplusplus") # available since VS 2017 15.7
                 endif()
 
                 # enable Just My Code for debugging convenience
-                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER 19.15)
+                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.15)
                     target_compile_options(${TARGET_NAME} ${SCOPE} "/JMC") # available since VS 2017 15.8
                 endif()
             endif()
@@ -61,6 +61,10 @@ function(CMAKESHIFT_SET_TARGET_COMPILER_SETTINGS TARGET_NAME)
                     cmakeshift_update_cache_variable_(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_NEW}")
                 endif()
                 target_compile_options(${TARGET_NAME} ${SCOPE} "/W4")
+
+                # disable annoying warnings:
+                # C4324 (structure was padded due to alignment specifier)
+                target_compile_options(${TARGET_NAME} ${SCOPE} "/wd4324")
             elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
                 target_compile_options(${TARGET_NAME} ${SCOPE} "-Wall" "-Wextra" "-pedantic")
             endif()
