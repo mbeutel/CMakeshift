@@ -22,6 +22,9 @@ function(CMAKESHIFT_SET_TARGET_COMPILER_SETTINGS TARGET_NAME)
         if(OPTION STREQUAL "default")
             # default options everyone can agree on
             if(MSVC)
+                # enable /bigobj switch to permit more than 2^16 COMDAT sections per .obj file (can be useful in heavily templatized code)
+                target_compile_options(${TARGET_NAME} ${SCOPE} "/bigobj")
+
                 # make `volatile` behave as specified by the language standard, as opposed to the quasi-atomic semantics VC++ implements by default
                 target_compile_options(${TARGET_NAME} ${SCOPE} "/volatile:iso")
 
