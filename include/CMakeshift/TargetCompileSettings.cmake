@@ -1,6 +1,6 @@
 
 # CMakeshift
-# SetTargetCompilerSettings.cmake
+# TargetCompileSettings.cmake
 # Author: Moritz Beutel
 
 
@@ -8,8 +8,9 @@
 #
 #     default                   some default options everyone can agree on (conformant behavior, debugging convenience, etc.)
 #     pedantic                  increase warning level
+#     fatal-errors              have the compiler stop at the first error
 #
-function(CMAKESHIFT_SET_TARGET_COMPILER_SETTINGS TARGET_NAME)
+function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
     function(CMAKESHIFT_UPDATE_CACHE_VARIABLE_ VAR_NAME VALUE)
         get_property(HELP_STRING CACHE ${VAR_NAME} PROPERTY HELPSTRING)
@@ -17,7 +18,7 @@ function(CMAKESHIFT_SET_TARGET_COMPILER_SETTINGS TARGET_NAME)
         set(${VAR_NAME} ${VALUE} CACHE ${VAR_TYPE} "${HELP_STRING}" FORCE)
     endfunction()
 
-    function(CMAKESHIFT_SET_TARGET_COMPILER_SETTING_ TARGET_NAME SCOPE OPTION0)
+    function(CMAKESHIFT_TARGET_COMPILE_SETTING_ TARGET_NAME SCOPE OPTION0)
         string(TOLOWER "${OPTION0}" OPTION)
         if(OPTION STREQUAL "default")
             # default options everyone can agree on
@@ -69,6 +70,14 @@ function(CMAKESHIFT_SET_TARGET_COMPILER_SETTINGS TARGET_NAME)
                 target_compile_options(${TARGET_NAME} ${SCOPE} "-Wall" "-Wextra" "-pedantic")
             endif()
 
+        elseif(OPTION STREQUAL "fatal-errors")
+            # every error is fatal; stop after reporting first error
+            if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+                target_compile_options(${TARGET_NAME} ${SCOPE} "-Wfatal-errors")
+            elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+                target_compile_options(${TARGET_NAME} ${SCOPE} "-ferror-limit=1")
+            endif()
+
         else()
             message(SEND_ERROR "Unknown target option \"${OPTION}\"")
         endif()
@@ -83,12 +92,12 @@ function(CMAKESHIFT_SET_TARGET_COMPILER_SETTINGS TARGET_NAME)
     endif()
 
     foreach(arg IN LISTS SCOPE_PRIVATE)
-        cmakeshift_set_target_compiler_setting_(${TARGET_NAME} PRIVATE "${arg}")
+        cmakeshift_target_compile_setting_(${TARGET_NAME} PRIVATE "${arg}")
     endforeach()
     foreach(arg IN LISTS SCOPE_INTERFACE)
-        cmakeshift_set_target_compiler_setting_(${TARGET_NAME} INTERFACE "${arg}")
+        cmakeshift_target_compile_setting_(${TARGET_NAME} INTERFACE "${arg}")
     endforeach()
     foreach(arg IN LISTS SCOPE_PUBLIC)
-        cmakeshift_set_target_compiler_setting_(${TARGET_NAME} PUBLIC "${arg}")
+        cmakeshift_target_compile_setting_(${TARGET_NAME} PUBLIC "${arg}")
     endforeach()
 endfunction()

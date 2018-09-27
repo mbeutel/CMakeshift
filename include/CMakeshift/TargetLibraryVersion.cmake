@@ -1,11 +1,11 @@
 
 # CMakeshift
-# SetLibraryVersion.cmake
+# TargetLibraryVersion.cmake
 # Author: Moritz Beutel
 
 
 # Set the library build version and API version, handling both static and shared libraries.
-function(CMAKESHIFT_SET_LIBRARY_VERSION TARGET_NAME TARGET_VERSION TARGET_APIVERSION)
+function(CMAKESHIFT_TARGET_LIBRARY_VERSION TARGET_NAME TARGET_VERSION TARGET_APIVERSION)
     set_target_properties(${TARGET_NAME} PROPERTIES
         VERSION ${TARGET_VERSION}
         INTERFACE_LIB_APIVERSION ${TARGET_APIVERSION})
