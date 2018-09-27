@@ -15,6 +15,7 @@ get_filename_component(CMAKESHIFT_SCRIPT_DIR "${CMAKE_CURRENT_LIST_DIR}" DIRECTO
 # Install library package with the given exports.
 #
 #     cmakeshift_install_simple_library_package(
+#         [INTERFACE]
 #         [PROJECT <project-name>]
 #         [NAMESPACE <namespace>]
 #         [EXPORT <export>]
@@ -24,7 +25,7 @@ get_filename_component(CMAKESHIFT_SCRIPT_DIR "${CMAKE_CURRENT_LIST_DIR}" DIRECTO
 function(CMAKESHIFT_INSTALL_SIMPLE_LIBRARY_PACKAGE)
 
     # Parse arguments.
-    set(options "")
+    set(options INTERFACE)
     set(oneValueArgs PROJECT VERSION_COMPATIBILITY CONFIG_TEMPLATE EXPORT)
     set(multiValueArgs "")
     cmake_parse_arguments(PARSE_ARGV 0 "SCOPE" "${options}" "${oneValueArgs}" "${multiValueArgs}")
