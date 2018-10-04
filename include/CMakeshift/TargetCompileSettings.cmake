@@ -6,7 +6,7 @@
 
 # Set known compile options for the target. Supported options:
 #
-#     default                   some default options everyone can agree on (conformant behavior, debugging convenience, etc.)
+#     default                   some default options everyone can agree on (conformant behavior, debugging convenience, opt-in export from shared objects, etc.)
 #     pedantic                  increase warning level
 #     fatal-errors              have the compiler stop at the first error
 #
@@ -52,6 +52,18 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
                     target_compile_options(${TARGET_NAME} ${SCOPE} "/JMC") # available since VS 2017 15.8
                 endif()
             endif()
+
+            # Don't export symbols from shared object libraries unless explicitly annotated.
+            get_property(_ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
+            foreach(LANG IN ITEMS C CXX CUDA)
+                list(FIND _ENABLED_LANGUAGES "${LANG}" _RESULT)
+                if(NOT _RESULT EQUAL -1)
+                    set_target_properties(${TARGET_NAME} PROPERTIES ${LANG}_VISIBILITY_PRESET hidden)
+                endif()
+            endforeach()
+
+            # Don't export inline functions. (TODO: this is non-standard behavior; do we really want this?)
+            #set_target_properties(${TARGET_NAME} PROPERTIES VISIBILITY_INLINES_HIDDEN TRUE)
 
         elseif(OPTION STREQUAL "pedantic")
             # highest sensible level for warnings and diagnostics
