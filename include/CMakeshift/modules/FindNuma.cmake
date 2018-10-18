@@ -22,10 +22,10 @@
 
 find_path(Numa_INCLUDE_DIR
     NAMES numa.h
-    PATHS "${PROJECT_SOURCE_DIR}/external")
+    PATHS "${PROJECT_SOURCE_DIR}/external/include" "${PROJECT_SOURCE_DIR}/external/numa/include")
 find_library(Numa_LIBRARY
     NAMES numa
-    PATHS "${PROJECT_SOURCE_DIR}/external")
+    PATHS "${PROJECT_SOURCE_DIR}/external/lib" "${PROJECT_SOURCE_DIR}/external/numa/lib")
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(Numa REQUIRED_VARS Numa_INCLUDE_DIR Numa_LIBRARY)

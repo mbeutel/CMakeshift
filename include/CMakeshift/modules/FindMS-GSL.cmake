@@ -19,7 +19,7 @@
 
 find_path(MS-GSL_INCLUDE_DIR
     NAMES "gsl/gsl_algorithm"
-    PATHS "${PROJECT_SOURCE_DIR}/external")
+    PATHS "${PROJECT_SOURCE_DIR}/external/include" "${PROJECT_SOURCE_DIR}/external/ms-gsl/include")
 
 include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(MS-GSL REQUIRED_VARS MS-GSL_INCLUDE_DIR)
