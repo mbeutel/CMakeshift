@@ -22,6 +22,15 @@ get_filename_component(CMAKESHIFT_SCRIPT_DIR "${CMAKE_CURRENT_LIST_DIR}" DIRECTO
 #         VERSION_COMPATIBILITY <AnyNewerVersion|ExactVersion|SameMajorVersion|SameMinorVersion>
 #         CONFIG_TEMPLATE <filename>)
 #
+# Arguments:
+#
+#     INTERFACE                     package is a header-only or script-only library (i.e. the exported build directory can be referenced regardless of the build configuration)
+#     PROJECT <project-name>        specifies the project name; ${PROJECT_NAME} is used if not specified
+#     NAMESPACE <namespace>         specifies the namespace prefix to use for exported targets; the project name is used if not specified
+#     EXPORT <export>               names the export to install
+#     VERSION_COMPATIBILITY <arg>   specifies package version compatibility semantics; supported arguments: AnyNewerVersion, ExactVersion, SameMajorVersion, SameMinorVersion
+#     CONFIG_TEMPLATE <filename>    specifies the "<package>.config.in" template file for the config module
+#
 function(CMAKESHIFT_INSTALL_SIMPLE_LIBRARY_PACKAGE)
 
     # Parse arguments.

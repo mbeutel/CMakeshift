@@ -4,7 +4,7 @@
 # CMakeshift scripts
 
 
-cmake_minimum_required(VERSION 3.10)
+cmake_minimum_required(VERSION 3.11)
 
 
 # CMakeshift is just a CMake script library, so it doesn't actually define targets.
