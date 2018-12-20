@@ -4,11 +4,27 @@
 # Author: Moritz Beutel
 
 
-# Set known compile options for the target. Supported options:
+# Set known compile options for the target. 
 #
-#     default                   some default options everyone can agree on (conformant behavior, debugging convenience, opt-in export from shared objects, etc.)
+#     cmakeshift_target_compile_settings(<target>
+#         PRIVATE|PUBLIC|INTERFACE <OPT>...)
+#
+# Supported values for <OPT>:
+#
+#     default                   default options everyone can agree on:
+#         default-base              uncontroversial settings
+#         default-conformance       conformant behavior
+#         default-debugging         debugging convenience ("just my code")
+#         default-shared            export from shared objects is opt-in (via attribute or declspec)
+#     hidden-inline             do not export inline functions (non-conformant but usually sane)
 #     pedantic                  increase warning level
 #     fatal-errors              have the compiler stop at the first error
+#     no-annoying-warnings      suppress annoying warnings (e.g. unknown pragma)
+#     runtime-checks            enable runtime checks:
+#         runtime-checks-stack      enable stack guard
+#         runtime-checks-asan       enable address sanitizer
+#         runtime-checks-ubsan      enable UB sanitizer
+#         runtime-checks-stdlib     enable standard library runtime checks
 #
 function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
@@ -19,41 +35,82 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
     endfunction()
 
     function(CMAKESHIFT_TARGET_COMPILE_SETTING_ TARGET_NAME SCOPE OPTION0)
-        string(TOLOWER "${OPTION0}" OPTION)
-        if(OPTION STREQUAL "default")
+        if(OPTION0 MATCHES "^\\$<(.+):([A-Za-z-]+)>$")
+            set(LB "$<${CMAKE_MATCH_1}:")
+            set(RB ">")
+            set(OPTION1 "${CMAKE_MATCH_2}")
+        else()
+            set(LB "")
+            set(RB "")
+            set(OPTION1 "${OPTION0}")
+        endif()
+
+        if(NOT OPTION1)
+            return()
+        endif()
+        string(TOLOWER "${OPTION1}" OPTION)
+
+        set(FOUND FALSE)
+
+        # buggy stdlib workarounds
+        set(HAVE_UBSAN FALSE)
+        set(HAVE_RTC_STDLIB FALSE)
+
+        if((OPTION STREQUAL "default") OR (OPTION STREQUAL "default-base"))
+            set(FOUND TRUE)
             # default options everyone can agree on
             if(MSVC)
                 # enable /bigobj switch to permit more than 2^16 COMDAT sections per .obj file (can be useful in heavily templatized code)
-                target_compile_options(${TARGET_NAME} ${SCOPE} "/bigobj")
-
-                # make `volatile` behave as specified by the language standard, as opposed to the quasi-atomic semantics VC++ implements by default
-                target_compile_options(${TARGET_NAME} ${SCOPE} "/volatile:iso")
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/bigobj${RB}")
 
                 # remove unreferenced COMDATs to improve linker throughput
-                target_compile_options(${TARGET_NAME} ${SCOPE} "/Zc:inline") # available since pre-modern VS 2013 Update 2
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/Zc:inline${RB}") # available since pre-modern VS 2013 Update 2
+            endif()
+        endif()
+
+        if((OPTION STREQUAL "default") OR (OPTION STREQUAL "default-conformance"))
+            set(FOUND TRUE)
+            # configure compilers to be ISO C++ conformant
+
+            # disable language extensions
+            set_target_properties(${TARGET_NAME} PROPERTIES CXX_EXTENSIONS OFF)
+
+            if(MSVC)
+                # make `volatile` behave as specified by the language standard, as opposed to the quasi-atomic semantics VC++ implements by default
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/volatile:iso${RB}")
 
                 # enable permissive mode (prefer already rejuvenated parts of compiler for better conformance)
                 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.10)
-                    target_compile_options(${TARGET_NAME} ${SCOPE} "/permissive-") # available since VS 2017 15.0
+                    target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/permissive-${RB}") # available since VS 2017 15.0
                 endif()
 
                 # enable "extern constexpr" support
                 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.13)
-                    target_compile_options(${TARGET_NAME} ${SCOPE} "/Zc:externConstexpr") # available since VS 2017 15.6
+                    target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/Zc:externConstexpr${RB}") # available since VS 2017 15.6
                 endif()
 
                 # enable updated __cplusplus macro value
                 if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.14)
-                    target_compile_options(${TARGET_NAME} ${SCOPE} "/Zc:__cplusplus") # available since VS 2017 15.7
-                endif()
-
-                # enable Just My Code for debugging convenience
-                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.15)
-                    target_compile_options(${TARGET_NAME} ${SCOPE} "/JMC") # available since VS 2017 15.8
+                    target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/Zc:__cplusplus${RB}") # available since VS 2017 15.7
                 endif()
             endif()
+        endif()
 
-            # Don't export symbols from shared object libraries unless explicitly annotated.
+        if((OPTION STREQUAL "default") OR (OPTION STREQUAL "default-debugging"))
+            set(FOUND TRUE)
+            # enable debugging aids
+
+            if(MSVC)
+                # enable Just My Code for debugging convenience
+                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.15)
+                    target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<CONFIG:Debug>:/JMC>${RB}") # available since VS 2017 15.8
+                endif()
+            endif()
+        endif()
+
+        if((OPTION STREQUAL "default") OR (OPTION STREQUAL "default-shared"))
+            set(FOUND TRUE)
+            # don't export symbols from shared object libraries unless explicitly annotated
             get_property(_ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
             foreach(LANG IN ITEMS C CXX CUDA)
                 list(FIND _ENABLED_LANGUAGES "${LANG}" _RESULT)
@@ -61,11 +118,16 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
                     set_target_properties(${TARGET_NAME} PROPERTIES ${LANG}_VISIBILITY_PRESET hidden)
                 endif()
             endforeach()
+        endif()
 
-            # Don't export inline functions. (TODO: this is non-standard behavior; do we really want this?)
-            #set_target_properties(${TARGET_NAME} PROPERTIES VISIBILITY_INLINES_HIDDEN TRUE)
+        if(OPTION STREQUAL "hidden-inline")
+            set(FOUND TRUE)
+            # don't export inline functions
+            set_target_properties(${TARGET_NAME} PROPERTIES VISIBILITY_INLINES_HIDDEN TRUE)
+        endif()
 
-        elseif(OPTION STREQUAL "pedantic")
+        if(OPTION STREQUAL "pedantic")
+            set(FOUND TRUE)
             # highest sensible level for warnings and diagnostics
             if(MSVC)
                 # remove "/Wx" from CMAKE_CXX_FLAGS if present, as VC++ doesn't tolerate more than one "/Wx" flag
@@ -73,24 +135,96 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
                     string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS_NEW "${CMAKE_CXX_FLAGS}")
                     cmakeshift_update_cache_variable_(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_NEW}")
                 endif()
-                target_compile_options(${TARGET_NAME} ${SCOPE} "/W4")
-
-                # disable annoying warnings:
-                # C4324 (structure was padded due to alignment specifier)
-                target_compile_options(${TARGET_NAME} ${SCOPE} "/wd4324")
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/W4${RB}")
             elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-                target_compile_options(${TARGET_NAME} ${SCOPE} "-Wall" "-Wextra" "-pedantic")
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}-Wall${RB}" "${LB}-Wextra${RB}" "${LB}-pedantic${RB}")
             endif()
+        endif()
 
-        elseif(OPTION STREQUAL "fatal-errors")
+        if(OPTION STREQUAL "fatal-errors")
+            set(FOUND TRUE)
             # every error is fatal; stop after reporting first error
             if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-                target_compile_options(${TARGET_NAME} ${SCOPE} "-Wfatal-errors")
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}-fmax-errors=1${RB}")
             elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-                target_compile_options(${TARGET_NAME} ${SCOPE} "-ferror-limit=1")
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}-ferror-limit=1${RB}")
+            endif()
+        endif()
+
+        if(OPTION STREQUAL "no-annoying-warnings")
+            set(FOUND TRUE)
+            # disable annoying warnings
+            if(MSVC)
+                # C4324 (structure was padded due to alignment specifier)
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/wd4324${RB}")
+            elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}-Wno-unknown-pragmas${RB}")
+            endif()
+        endif()
+
+        if((OPTION STREQUAL "runtime-checks") OR (OPTION STREQUAL "runtime-checks-stack"))
+            set(FOUND TRUE)
+            if(MSVC)
+                # VC++ already enables stack frame run-time error checking and detection of uninitialized values by default in debug builds
+
+                # insert control flow guards
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/guard:cf${RB}")
+                target_link_libraries(${TARGET_NAME} ${SCOPE} "${LB}-guard:cf${RB}") # this flag also needs to be passed to the linker (CMake needs a leading '-' to recognize a flag here)
             endif()
 
-        else()
+            if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+                # enable stack protector
+                target_compile_options(${TARGET_NAME} PRIVATE "${LB}-fstack-protector${RB}")
+            endif()
+        endif()
+
+        if((OPTION STREQUAL "runtime-checks") OR (OPTION STREQUAL "runtime-checks-asan"))
+            set(FOUND TRUE)
+            # enable AddressSanitizer
+            if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
+                target_compile_options(${TARGET_NAME} PRIVATE "${LB}-fsanitize=address${RB}")
+                target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=address${RB}")
+            endif()
+        endif()
+
+        if((OPTION STREQUAL "runtime-checks") OR (OPTION STREQUAL "runtime-checks-ubsan"))
+            set(FOUND TRUE)
+            # enable UndefinedBehaviorSanitizer
+            if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+                target_compile_options(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
+                target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
+
+            elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+                # UBSan can cause linker errors in Clang 7, and it raises issues in libc++ debugging code
+                if((CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.0) AND NOT HAVE_RTC_STDLIB)
+                    set(HAVE_UBSAN TRUE)
+                    target_compile_options(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
+                    target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
+                endif()
+            endif()
+        endif()
+
+        if((OPTION STREQUAL "runtime-checks") OR (OPTION STREQUAL "runtime-checks-stdlib"))
+            set(FOUND TRUE)
+            if(MSVC)
+                # enable checked iterators
+                target_compile_definitions(${TARGET_NAME} PRIVATE "${LB}$<$<NOT:$<CONFIG:Debug>>:_ITERATOR_DEBUG_LEVEL=1>${RB}")
+
+            elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+                # enable libstdc++ debug mode
+                target_compile_definitions(${TARGET_NAME} PRIVATE "${LB}$<$<CONFIG:Debug>:_GLIBCXX_DEBUG>${RB}")
+
+            elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
+                # UBSan raises issues in libc++ debugging code
+                if(NOT HAVE_UBSAN)
+                    set(HAVE_RTC_STDLIB TRUE)
+                    # enable libc++ debug mode
+                    target_compile_definitions(${TARGET_NAME} PRIVATE "${LB}$<IF:$<CONFIG:Debug>,_LIBCPP_DEBUG=1,_LIBCPP_DEBUG=0>${RB}")
+                endif()
+            endif()
+        endif()
+
+        if(NOT FOUND)
             message(SEND_ERROR "Unknown target option \"${OPTION}\"")
         endif()
     endfunction()
