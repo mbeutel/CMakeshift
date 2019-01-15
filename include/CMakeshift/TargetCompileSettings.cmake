@@ -11,20 +11,29 @@
 #
 # Supported values for <OPT>:
 #
-#     default                   default options everyone can agree on:
-#         default-base              uncontroversial settings
-#         default-conformance       conformant behavior
-#         default-debugging         debugging convenience ("just my code")
-#         default-shared            export from shared objects is opt-in (via attribute or declspec)
-#     hidden-inline             do not export inline functions (non-conformant but usually sane)
-#     pedantic                  increase warning level
-#     fatal-errors              have the compiler stop at the first error
-#     no-annoying-warnings      suppress annoying warnings (e.g. unknown pragma)
-#     runtime-checks            enable runtime checks:
-#         runtime-checks-stack      enable stack guard
-#         runtime-checks-asan       enable address sanitizer
-#         runtime-checks-ubsan      enable UB sanitizer
-#         runtime-checks-stdlib     enable standard library runtime checks
+#     default                       default options everyone can agree on:
+#         default-base                  uncontroversial settings
+#         default-conformance           conformant behavior
+#         default-debugjustmycode       debugging convenience: "just my code"
+#         default-shared                export from shared objects is opt-in (via attribute or declspec)
+#     hidden-inline                 do not export inline functions (non-conformant but usually sane)
+#     pedantic                      increase warning level
+#     fatal-errors                  have the compiler stop at the first error
+#     disable-annoying-warnings     suppress annoying warnings (e.g. unknown pragma)
+#     runtime-checks                enable runtime checks:
+#         runtime-checks-stack          enable stack guard
+#         runtime-checks-asan           enable address sanitizer
+#         runtime-checks-ubsan          enable UB sanitizer
+#         runtime-checks-stdlib         enable standard library runtime checks
+#
+#     Prefixing a sub-option with "no-" suppresses it when the summary option is used:
+#
+#         # enables all options in "default" except for "default-debugging"
+#         cmakeshift_target_compile_settings(foo
+#             PRIVATE
+#                 default no-default-debugging)
+#
+#     Note that generator expressions are not supported for suppressed options.
 #
 function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
@@ -34,7 +43,59 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         set(${VAR_NAME} ${VALUE} CACHE ${VAR_TYPE} "${HELP_STRING}" FORCE)
     endfunction()
 
-    function(CMAKESHIFT_TARGET_COMPILE_SETTING_ TARGET_NAME SCOPE OPTION0)
+    set(_NO_DEFAULT_BASE FALSE)
+    set(_NO_DEFAULT_CONFORMANCE FALSE)
+    set(_NO_DEFAULT_DEBUGJMC FALSE)
+    set(_NO_DEFAULT_SHARED FALSE)
+    set(_NO_HIDDEN_INLINE FALSE)
+    set(_NO_PEDANTIC FALSE)
+    set(_NO_FATAL_ERRORS FALSE)
+    set(_NO_DISABLE_ANNOYING_WARNINGS FALSE)
+    set(_NO_RTC_STACK FALSE)
+    set(_NO_RTC_ASAN FALSE)
+    set(_NO_RTC_UBSAN FALSE)
+    set(_NO_RTC_STDLIB FALSE)
+
+    function(CMAKESHIFT_TARGET_COMPILE_SETTING_ACCUMULATE_ TARGET_NAME SCOPE OPTION0)
+        if(NOT OPTION0 MATCHES "^[Nn][Oo]-([A-Za-z-]+)$")
+            return()
+        endif()
+        set(OPTION1 "no-${CMAKE_MATCH_1}")
+        if(NOT OPTION1)
+            return()
+        endif()
+        string(TOLOWER "${OPTION1}" OPTION)
+
+        if(OPTION STREQUAL "no-default-base")
+            set(_NO_DEFAULT_BASE TRUE PARENT_SCOPE)
+        elseif(OPTION STREQUAL "no-default-conformance")
+            set(_NO_DEFAULT_CONFORMANCE TRUE PARENT_SCOPE)
+        elseif(OPTION STREQUAL "no-default-debugjustmycode")
+            set(_NO_DEFAULT_DEBUGJMC TRUE PARENT_SCOPE)
+        elseif(OPTION STREQUAL "no-default-shared")
+            set(_NO_DEFAULT_SHARED TRUE PARENT_SCOPE)
+        elseif(OPTION STREQUAL "no-hidden-inline")
+            set(_NO_HIDDEN_INLINE TRUE PARENT_SCOPE)
+        elseif(OPTION STREQUAL "no-pedantic")
+            set(_NO_PEDANTIC TRUE PARENT_SCOPE)
+        elseif(OPTION STREQUAL "no-fatal-errors")
+            set(_NO_FATAL_ERRORS TRUE PARENT_SCOPE)
+        elseif(OPTION STREQUAL "no-disable-annoying-warnings")
+            set(_NO_DISABLE_ANNOYING_WARNINGS TRUE PARENT_SCOPE)
+        elseif(OPTION STREQUAL "runtime-checks-stack")
+            set(_NO_RTC_STACK TRUE PARENT_SCOPE)
+        elseif(OPTION STREQUAL "runtime-checks-asan")
+            set(_NO_RTC_ASAN TRUE PARENT_SCOPE)
+        elseif(OPTION STREQUAL "runtime-checks-ubsan")
+            set(_NO_RTC_UBSAN TRUE PARENT_SCOPE)
+        elseif(OPTION STREQUAL "runtime-checks-stdlib")
+            set(_NO_RTC_STDLIB TRUE PARENT_SCOPE)
+        else()
+            message(SEND_ERROR "Unknown target option \"${OPTION}\"")
+        endif()
+    endfunction()
+
+    function(CMAKESHIFT_TARGET_COMPILE_SETTING_APPLY_ TARGET_NAME SCOPE OPTION0)
         if(OPTION0 MATCHES "^\\$<(.+):([A-Za-z-]+)>$")
             set(LB "$<${CMAKE_MATCH_1}:")
             set(RB ">")
@@ -50,13 +111,20 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         endif()
         string(TOLOWER "${OPTION1}" OPTION)
 
+        if(OPTION MATCHES "^no-[A-Za-z-]+$")
+            if(NOT LB STREQUAL "")
+                message(SEND_ERROR "\"${OPTION0}\": Cannot use generator expression with suppressed options")
+            endif()
+            return()
+        endif()
+
         set(FOUND FALSE)
 
         # buggy stdlib workarounds
         set(HAVE_UBSAN FALSE)
         set(HAVE_RTC_STDLIB FALSE)
 
-        if((OPTION STREQUAL "default") OR (OPTION STREQUAL "default-base"))
+        if((OPTION STREQUAL "default" OR OPTION STREQUAL "default-base") AND NOT _NO_DEFAULT_BASE)
             set(FOUND TRUE)
             # default options everyone can agree on
             if(MSVC)
@@ -68,7 +136,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             endif()
         endif()
 
-        if((OPTION STREQUAL "default") OR (OPTION STREQUAL "default-conformance"))
+        if((OPTION STREQUAL "default" OR OPTION STREQUAL "default-conformance") AND NOT _NO_DEFAULT_CONFORMANCE)
             set(FOUND TRUE)
             # configure compilers to be ISO C++ conformant
 
@@ -96,7 +164,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             endif()
         endif()
 
-        if((OPTION STREQUAL "default") OR (OPTION STREQUAL "default-debugging"))
+        if((OPTION STREQUAL "default" OR OPTION STREQUAL "default-debugjustmycode") AND NOT _NO_DEFAULT_DEBUGJMC)
             set(FOUND TRUE)
             # enable debugging aids
 
@@ -108,7 +176,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             endif()
         endif()
 
-        if((OPTION STREQUAL "default") OR (OPTION STREQUAL "default-shared"))
+        if((OPTION STREQUAL "default" OR OPTION STREQUAL "default-shared") AND NOT _NO_DEFAULT_SHARED)
             set(FOUND TRUE)
             # don't export symbols from shared object libraries unless explicitly annotated
             get_property(_ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
@@ -120,19 +188,19 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             endforeach()
         endif()
 
-        if(OPTION STREQUAL "hidden-inline")
+        if(OPTION STREQUAL "hidden-inline" AND NOT _NO_HIDDEN_INLINE)
             set(FOUND TRUE)
             # don't export inline functions
             set_target_properties(${TARGET_NAME} PROPERTIES VISIBILITY_INLINES_HIDDEN TRUE)
         endif()
 
-        if(OPTION STREQUAL "pedantic")
+        if(OPTION STREQUAL "pedantic" AND NOT _NO_PEDANTIC)
             set(FOUND TRUE)
             # highest sensible level for warnings and diagnostics
             if(MSVC)
                 # remove "/Wx" from CMAKE_CXX_FLAGS if present, as VC++ doesn't tolerate more than one "/Wx" flag
                 if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-                    string(REGEX REPLACE "/W[0-4]" "" CMAKE_CXX_FLAGS_NEW "${CMAKE_CXX_FLAGS}")
+                    string(REGEX REPLACE "/W[0-4]" " " CMAKE_CXX_FLAGS_NEW "${CMAKE_CXX_FLAGS}")
                     cmakeshift_update_cache_variable_(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_NEW}")
                 endif()
                 target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/W4${RB}")
@@ -141,7 +209,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             endif()
         endif()
 
-        if(OPTION STREQUAL "fatal-errors")
+        if(OPTION STREQUAL "fatal-errors" AND NOT _NO_FATAL_ERRORS)
             set(FOUND TRUE)
             # every error is fatal; stop after reporting first error
             if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
@@ -151,7 +219,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             endif()
         endif()
 
-        if(OPTION STREQUAL "no-annoying-warnings")
+        if(OPTION STREQUAL "disable-annoying-warnings" AND NOT _NO_DISABLE_ANNOYING_WARNINGS)
             set(FOUND TRUE)
             # disable annoying warnings
             if(MSVC)
@@ -162,7 +230,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             endif()
         endif()
 
-        if((OPTION STREQUAL "runtime-checks") OR (OPTION STREQUAL "runtime-checks-stack"))
+        if((OPTION STREQUAL "runtime-checks" OR OPTION STREQUAL "runtime-checks-stack") AND NOT _NO_RTC_STACK)
             set(FOUND TRUE)
             if(MSVC)
                 # VC++ already enables stack frame run-time error checking and detection of uninitialized values by default in debug builds
@@ -178,7 +246,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             endif()
         endif()
 
-        if((OPTION STREQUAL "runtime-checks") OR (OPTION STREQUAL "runtime-checks-asan"))
+        if((OPTION STREQUAL "runtime-checks" OR OPTION STREQUAL "runtime-checks-asan") AND NOT _NO_RTC_ASAN)
             set(FOUND TRUE)
             # enable AddressSanitizer
             if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
@@ -187,7 +255,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             endif()
         endif()
 
-        if((OPTION STREQUAL "runtime-checks") OR (OPTION STREQUAL "runtime-checks-ubsan"))
+        if((OPTION STREQUAL "runtime-checks" OR OPTION STREQUAL "runtime-checks-ubsan") AND NOT _NO_RTC_UBSAN)
             set(FOUND TRUE)
             # enable UndefinedBehaviorSanitizer
             if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
@@ -204,7 +272,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             endif()
         endif()
 
-        if((OPTION STREQUAL "runtime-checks") OR (OPTION STREQUAL "runtime-checks-stdlib"))
+        if((OPTION STREQUAL "runtime-checks" OR OPTION STREQUAL "runtime-checks-stdlib") AND NOT _NO_RTC_STDLIB)
             set(FOUND TRUE)
             if(MSVC)
                 # enable checked iterators
@@ -238,12 +306,22 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
     endif()
 
     foreach(arg IN LISTS SCOPE_PRIVATE)
-        cmakeshift_target_compile_setting_(${TARGET_NAME} PRIVATE "${arg}")
+        cmakeshift_target_compile_setting_accumulate_(${TARGET_NAME} PRIVATE "${arg}")
     endforeach()
     foreach(arg IN LISTS SCOPE_INTERFACE)
-        cmakeshift_target_compile_setting_(${TARGET_NAME} INTERFACE "${arg}")
+        cmakeshift_target_compile_setting_accumulate_(${TARGET_NAME} INTERFACE "${arg}")
     endforeach()
     foreach(arg IN LISTS SCOPE_PUBLIC)
-        cmakeshift_target_compile_setting_(${TARGET_NAME} PUBLIC "${arg}")
+        cmakeshift_target_compile_setting_accumulate_(${TARGET_NAME} PUBLIC "${arg}")
+    endforeach()
+
+    foreach(arg IN LISTS SCOPE_PRIVATE)
+        cmakeshift_target_compile_setting_apply_(${TARGET_NAME} PRIVATE "${arg}")
+    endforeach()
+    foreach(arg IN LISTS SCOPE_INTERFACE)
+        cmakeshift_target_compile_setting_apply_(${TARGET_NAME} INTERFACE "${arg}")
+    endforeach()
+    foreach(arg IN LISTS SCOPE_PUBLIC)
+        cmakeshift_target_compile_setting_apply_(${TARGET_NAME} PUBLIC "${arg}")
     endforeach()
 endfunction()
