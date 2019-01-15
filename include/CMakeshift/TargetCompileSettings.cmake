@@ -4,6 +4,20 @@
 # Author: Moritz Beutel
 
 
+if(_VCPKG_ROOT_DIR AND VCPKG_TARGET_TRIPLET)
+    include("${_VCPKG_ROOT_DIR}/triplets/${VCPKG_TARGET_TRIPLET}.cmake")
+
+    # set default library linkage according to selected triplet
+    if(VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic")
+        set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared library")
+    elseif(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
+        set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared library")
+    else()
+        message(FATAL_ERROR "Invalid setting for VCPKG_LIBRARY_LINKAGE: \"${VCPKG_LIBRARY_LINKAGE}\". It must be \"static\" or \"dynamic\"")
+    endif()
+endif()
+
+
 # Set known compile options for the target. 
 #
 #     cmakeshift_target_compile_settings(<target>
@@ -13,6 +27,7 @@
 #
 #     default                       default options everyone can agree on:
 #         default-base                  uncontroversial settings
+#         default-triplet               heed linking options of selected Vcpkg triplet
 #         default-conformance           conformant behavior
 #         default-debugjustmycode       debugging convenience: "just my code"
 #         default-shared                export from shared objects is opt-in (via attribute or declspec)
@@ -44,6 +59,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
     endfunction()
 
     set(_NO_DEFAULT_BASE FALSE)
+    set(_NO_DEFAULT_TRIPLET FALSE)
     set(_NO_DEFAULT_CONFORMANCE FALSE)
     set(_NO_DEFAULT_DEBUGJMC FALSE)
     set(_NO_DEFAULT_SHARED FALSE)
@@ -68,6 +84,8 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
         if(OPTION STREQUAL "no-default-base")
             set(_NO_DEFAULT_BASE TRUE PARENT_SCOPE)
+        elseif(OPTION STREQUAL "no-default-triplet")
+            set(_NO_DEFAULT_TRIPLET TRUE PARENT_SCOPE)
         elseif(OPTION STREQUAL "no-default-conformance")
             set(_NO_DEFAULT_CONFORMANCE TRUE PARENT_SCOPE)
         elseif(OPTION STREQUAL "no-default-debugjustmycode")
@@ -133,6 +151,30 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
                 # remove unreferenced COMDATs to improve linker throughput
                 target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/Zc:inline${RB}") # available since pre-modern VS 2013 Update 2
+            endif()
+        endif()
+
+        if((OPTION STREQUAL "default" OR OPTION STREQUAL "default-triplet") AND NOT _NO_DEFAULT_TRIPLET)
+            set(FOUND TRUE)
+            # heed linking options of selected Vcpkg triplet
+            if(MSVC AND VCPKG_CRT_LINKAGE)
+                if(VCPKG_CRT_LINKAGE STREQUAL "dynamic")
+                    set(_CRT_FLAG "D")
+                elseif(VCPKG_CRT_LINKAGE STREQUAL "static")
+                    set(_CRT_FLAG "T")
+                else()
+                    message(FATAL_ERROR "Invalid setting for VCPKG_CRT_LINKAGE: \"${VCPKG_CRT_LINKAGE}\". It must be \"static\" or \"dynamic\"")
+                endif()
+
+                # replace dynamic library linking flags with the desired option
+                if(CMAKE_CXX_FLAGS_DEBUG MATCHES "/M(D|T)d")
+                    string(REGEX REPLACE "/M(D|T)d" "/M${_CRT_FLAG}d" CMAKE_CXX_FLAGS_DEBUG_NEW "${CMAKE_CXX_FLAGS_DEBUG}")
+                    cmakeshift_update_cache_variable_(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG_NEW}")
+                endif()
+                if(CMAKE_CXX_FLAGS_RELEASE MATCHES "/M(D|T)")
+                    string(REGEX REPLACE "/M(D|T)" "/M${_CRT_FLAG}" CMAKE_CXX_FLAGS_RELEASE_NEW "${CMAKE_CXX_FLAGS_RELEASE}")
+                    cmakeshift_update_cache_variable_(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE_NEW}")
+                endif()
             endif()
         endif()
 
