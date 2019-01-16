@@ -34,7 +34,7 @@ endif()
 #     hidden-inline                 do not export inline functions (non-conformant but usually sane)
 #     pedantic                      increase warning level
 #     fatal-errors                  have the compiler stop at the first error
-#     disable-annoying-warnings     suppress annoying warnings (e.g. unknown pragma)
+#     disable-annoying-warnings     suppress annoying warnings (e.g. unknown pragma, secure CRT)
 #     runtime-checks                enable runtime checks:
 #         runtime-checks-stack          enable stack guard
 #         runtime-checks-asan           enable address sanitizer
@@ -271,6 +271,8 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             if(MSVC)
                 # C4324 (structure was padded due to alignment specifier)
                 target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/wd4324${RB}")
+                # secure CRT warnings (e.g. "use sprintf_s rather than sprintf")
+                target_compile_definitions(${TARGET_NAME} ${SCOPE} "${LB}_CRT_SECURE_NO_WARNINGS${RB}")
             elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
                 target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}-Wno-unknown-pragmas${RB}")
             endif()
