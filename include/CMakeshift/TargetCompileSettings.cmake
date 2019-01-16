@@ -28,6 +28,7 @@ endif()
 #     default                       default options everyone can agree on:
 #         default-base                  uncontroversial settings
 #         default-utf8-source           source files use UTF-8 encoding
+#         default-windows-unicode       UNICODE and _UNICODE are defined on Windows
 #         default-triplet               heed linking options of selected Vcpkg triplet
 #         default-conformance           conformant behavior
 #         default-debugjustmycode       debugging convenience: "just my code"
@@ -61,6 +62,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
     set(_NO_DEFAULT_BASE FALSE)
     set(_NO_DEFAULT_UTF8_SOURCE FALSE)
+    set(_NO_DEFAULT_WINDOWS_UNICODE FALSE)
     set(_NO_DEFAULT_TRIPLET FALSE)
     set(_NO_DEFAULT_CONFORMANCE FALSE)
     set(_NO_DEFAULT_DEBUGJMC FALSE)
@@ -88,6 +90,8 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             set(_NO_DEFAULT_BASE TRUE PARENT_SCOPE)
         elseif(OPTION STREQUAL "no-default-utf8-source")
             set(_NO_DEFAULT_UTF8_SOURCE TRUE PARENT_SCOPE)
+        elseif(OPTION STREQUAL "no-default-windows-unicode")
+            set(_NO_DEFAULT_WINDOWS_UNICODE TRUE PARENT_SCOPE)
         elseif(OPTION STREQUAL "no-default-triplet")
             set(_NO_DEFAULT_TRIPLET TRUE PARENT_SCOPE)
         elseif(OPTION STREQUAL "no-default-conformance")
@@ -163,6 +167,14 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             # source files use UTF-8 encoding
             if(MSVC)
                 target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/utf-8${RB}")
+            endif()
+        endif()
+
+        if((OPTION STREQUAL "default" OR OPTION STREQUAL "default-windows-unicode") AND NOT _NO_DEFAULT_WINDOWS_UNICODE)
+            set(FOUND TRUE)
+            # UNICODE and _UNICODE are defined on Windows
+            if(WIN32)
+                target_compile_definitions(${TARGET_NAME} ${SCOPE} "${LB}$<$<PLATFORM_ID:Windows>:UNICODE>${RB}" "${LB}$<$<PLATFORM_ID:Windows>:_UNICODE>${RB}")
             endif()
         endif()
 
