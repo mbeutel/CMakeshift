@@ -27,6 +27,7 @@ endif()
 #
 #     default                       default options everyone can agree on:
 #         default-base                  uncontroversial settings
+#         default-utf8-source           source files use UTF-8 encoding
 #         default-triplet               heed linking options of selected Vcpkg triplet
 #         default-conformance           conformant behavior
 #         default-debugjustmycode       debugging convenience: "just my code"
@@ -59,6 +60,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
     endfunction()
 
     set(_NO_DEFAULT_BASE FALSE)
+    set(_NO_DEFAULT_UTF8_SOURCE FALSE)
     set(_NO_DEFAULT_TRIPLET FALSE)
     set(_NO_DEFAULT_CONFORMANCE FALSE)
     set(_NO_DEFAULT_DEBUGJMC FALSE)
@@ -84,6 +86,8 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
         if(OPTION STREQUAL "no-default-base")
             set(_NO_DEFAULT_BASE TRUE PARENT_SCOPE)
+        elseif(OPTION STREQUAL "no-default-utf8-source")
+            set(_NO_DEFAULT_UTF8_SOURCE TRUE PARENT_SCOPE)
         elseif(OPTION STREQUAL "no-default-triplet")
             set(_NO_DEFAULT_TRIPLET TRUE PARENT_SCOPE)
         elseif(OPTION STREQUAL "no-default-conformance")
@@ -151,6 +155,14 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
                 # remove unreferenced COMDATs to improve linker throughput
                 target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/Zc:inline${RB}") # available since pre-modern VS 2013 Update 2
+            endif()
+        endif()
+
+        if((OPTION STREQUAL "default" OR OPTION STREQUAL "default-utf8-source") AND NOT _NO_DEFAULT_UTF8_SOURCE)
+            set(FOUND TRUE)
+            # source files use UTF-8 encoding
+            if(MSVC)
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/utf-8${RB}")
             endif()
         endif()
 
