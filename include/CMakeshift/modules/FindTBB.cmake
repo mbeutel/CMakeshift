@@ -1,3 +1,27 @@
+
+#.rst:
+# FindTBB
+# --------
+#
+# Find the TBB library.
+#
+# This will define the following variables::
+#
+#   TBB_FOUND      - True if the TBB library was found
+#
+# and the following imported targets::
+#
+#   TBB::tbb       - The TBB library
+#   TBB::tbbmalloc - TBB memory allocators
+#
+# The components tbb, tbbmalloc import the corresponding targets.
+#
+# The following macros can be defined prior to using this find module:
+#
+#   TBB_ROOT       - Optional path where to search for Numa
+
+
+
 # Copyright (c) 2018 Intel Corporation
 #
 # Licensed under the Apache License, Version 2.0 (the "License");
@@ -15,6 +39,10 @@
 #
 #
 #
+
+# Find module taken from Intel Parallel STL:
+# https://github.com/intel/parallelstl/blob/master/cmake/FindTBB.cmake
+
 
 include(FindPackageHandleStandardArgs)
 

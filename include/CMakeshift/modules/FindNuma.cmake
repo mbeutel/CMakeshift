@@ -3,7 +3,7 @@
 # FindNuma
 # --------
 #
-# Find the Numa Library.
+# Find the Numa library.
 #
 # Look for the header file in the project's external include directory, in the NUMA_ROOT_DIR directory,
 # and in the system include directories.
