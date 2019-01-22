@@ -16,7 +16,7 @@ set(CMAKE_DISABLE_IN_SOURCE_BUILD ON)
 
 # Define the project.
 project(CMakeshift
-    VERSION 3.2.0
+    VERSION 3.2.1
     LANGUAGES)
 
 

@@ -18,6 +18,16 @@ if(_VCPKG_ROOT_DIR AND VCPKG_TARGET_TRIPLET)
 endif()
 
 
+define_property(TARGET
+    PROPERTY CMAKESHIFT_COMPILE_SETTINGS
+    BRIEF_DOCS "compile settings used for target"
+    FULL_DOCS "compile settings used for target")
+define_property(TARGET
+    PROPERTY CMAKESHIFT_INTERFACE_COMPILE_SETTINGS
+    BRIEF_DOCS "compile settings used for target"
+    FULL_DOCS "compile settings used for target")
+
+
 # Set known compile options for the target. 
 #
 #     cmakeshift_target_compile_settings(<target>
@@ -41,7 +51,7 @@ endif()
 #         runtime-checks-stack          enable stack guard
 #         runtime-checks-asan           enable address sanitizer
 #         runtime-checks-ubsan          enable UB sanitizer
-#         runtime-checks-stdlib         enable standard library runtime checks
+#     debug-stdlib                  enable debug mode of standard library
 #
 #     Prefixing a sub-option with "no-" suppresses it when the summary option is used:
 #
@@ -52,6 +62,10 @@ endif()
 #
 #     Note that generator expressions are not supported for suppressed options.
 #
+#     When using "debug-stdlib", note that this option may alter the object layout of containers.
+#     If your target exchanges container instantiations with other targets, those must also be
+#     compiled with "debug-stdlib", otherwise you may get silent data corruption at runtime.
+#
 function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
     function(CMAKESHIFT_UPDATE_CACHE_VARIABLE_ VAR_NAME VALUE)
@@ -60,68 +74,91 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         set(${VAR_NAME} ${VALUE} CACHE ${VAR_TYPE} "${HELP_STRING}" FORCE)
     endfunction()
 
-    set(_NO_DEFAULT_BASE FALSE)
-    set(_NO_DEFAULT_UTF8_SOURCE FALSE)
-    set(_NO_DEFAULT_WINDOWS_UNICODE FALSE)
-    set(_NO_DEFAULT_TRIPLET FALSE)
-    set(_NO_DEFAULT_CONFORMANCE FALSE)
-    set(_NO_DEFAULT_DEBUGJMC FALSE)
-    set(_NO_DEFAULT_SHARED FALSE)
-    set(_NO_HIDDEN_INLINE FALSE)
-    set(_NO_PEDANTIC FALSE)
-    set(_NO_FATAL_ERRORS FALSE)
-    set(_NO_DISABLE_ANNOYING_WARNINGS FALSE)
-    set(_NO_RTC_STACK FALSE)
-    set(_NO_RTC_ASAN FALSE)
-    set(_NO_RTC_UBSAN FALSE)
-    set(_NO_RTC_STDLIB FALSE)
+    set(_KNOWN_CUMULATIVE_SETTINGS
+        "default"
+        "runtime-checks")
+
+    set(_KNOWN_SETTINGS
+        "default-base"
+        "default-utf8-source"
+        "default-windows-unicode"
+        "default-triplet"
+        "default-conformance"
+        "default-debugjustmycode"
+        "default-shared"
+        "hidden-inline"
+        "pedantic"
+        "fatal-errors"
+        "disable-annoying-warnings"
+        "runtime-checks-stack"
+        "runtime-checks-asan"
+        "runtime-checks-ubsan"
+        "debug-stdlib")
+
+    get_target_property(_CURRENT_SETTINGS ${TARGET_NAME} CMAKESHIFT_COMPILE_SETTINGS)
+    if(NOT _CURRENT_SETTINGS)
+        set(_CURRENT_SETTINGS "") # set to "NOTFOUND" if target property doesn't exist
+    endif()
+    set(_CURRENT_SETTINGS_0 "${_CURRENT_SETTINGS}")
+    get_target_property(_CURRENT_INTERFACE_SETTINGS_0 ${TARGET_NAME} CMAKESHIFT_INTERFACE_COMPILE_SETTINGS)
+    get_target_property(_CURRENT_INTERFACE_SETTINGS ${TARGET_NAME} CMAKESHIFT_INTERFACE_COMPILE_SETTINGS)
+    if(NOT _CURRENT_INTERFACE_SETTINGS)
+        set(_CURRENT_INTERFACE_SETTINGS "") # set to "NOTFOUND" if target property doesn't exist
+    endif()
+    set(_CURRENT_INTERFACE_SETTINGS_0 "${_CURRENT_INTERFACE_SETTINGS}")
+
+    set(_SUPPRESSED_SETTINGS ${_CURRENT_SETTINGS})
+    set(_SUPPRESSED_INTERFACE_SETTINGS ${_CURRENT_INTERFACE_SETTINGS})
 
     function(CMAKESHIFT_TARGET_COMPILE_SETTING_ACCUMULATE_ TARGET_NAME SCOPE OPTION0)
+        if(SCOPE STREQUAL INTERFACE)
+            set(_INTERFACE "_INTERFACE")
+        else()
+            set(_INTERFACE "")
+        endif()
+
         if(NOT OPTION0 MATCHES "^[Nn][Oo]-([A-Za-z-]+)$")
             return()
         endif()
-        set(OPTION1 "no-${CMAKE_MATCH_1}")
+        set(OPTION1 "${CMAKE_MATCH_1}")
         if(NOT OPTION1)
             return()
         endif()
         string(TOLOWER "${OPTION1}" OPTION)
 
-        if(OPTION STREQUAL "no-default-base")
-            set(_NO_DEFAULT_BASE TRUE PARENT_SCOPE)
-        elseif(OPTION STREQUAL "no-default-utf8-source")
-            set(_NO_DEFAULT_UTF8_SOURCE TRUE PARENT_SCOPE)
-        elseif(OPTION STREQUAL "no-default-windows-unicode")
-            set(_NO_DEFAULT_WINDOWS_UNICODE TRUE PARENT_SCOPE)
-        elseif(OPTION STREQUAL "no-default-triplet")
-            set(_NO_DEFAULT_TRIPLET TRUE PARENT_SCOPE)
-        elseif(OPTION STREQUAL "no-default-conformance")
-            set(_NO_DEFAULT_CONFORMANCE TRUE PARENT_SCOPE)
-        elseif(OPTION STREQUAL "no-default-debugjustmycode")
-            set(_NO_DEFAULT_DEBUGJMC TRUE PARENT_SCOPE)
-        elseif(OPTION STREQUAL "no-default-shared")
-            set(_NO_DEFAULT_SHARED TRUE PARENT_SCOPE)
-        elseif(OPTION STREQUAL "no-hidden-inline")
-            set(_NO_HIDDEN_INLINE TRUE PARENT_SCOPE)
-        elseif(OPTION STREQUAL "no-pedantic")
-            set(_NO_PEDANTIC TRUE PARENT_SCOPE)
-        elseif(OPTION STREQUAL "no-fatal-errors")
-            set(_NO_FATAL_ERRORS TRUE PARENT_SCOPE)
-        elseif(OPTION STREQUAL "no-disable-annoying-warnings")
-            set(_NO_DISABLE_ANNOYING_WARNINGS TRUE PARENT_SCOPE)
-        elseif(OPTION STREQUAL "no-runtime-checks-stack")
-            set(_NO_RTC_STACK TRUE PARENT_SCOPE)
-        elseif(OPTION STREQUAL "no-runtime-checks-asan")
-            set(_NO_RTC_ASAN TRUE PARENT_SCOPE)
-        elseif(OPTION STREQUAL "no-runtime-checks-ubsan")
-            set(_NO_RTC_UBSAN TRUE PARENT_SCOPE)
-        elseif(OPTION STREQUAL "no-runtime-checks-stdlib")
-            set(_NO_RTC_STDLIB TRUE PARENT_SCOPE)
-        else()
-            message(SEND_ERROR "Unknown target option \"${OPTION}\"")
+        # Is the setting known?
+        list(FIND _KNOWN_SETTINGS "${OPTION}" _IDX)
+        if(_IDX EQUAL -1)
+            list(FIND _KNOWN_CUMULATIVE_SETTINGS "${OPTION}" _IDX)
+            if(NOT _IDX EQUAL -1)
+                message(SEND_ERROR "\"no-${OPTION}\": Cannot suppress a cumulative option")
+            else()
+                message(SEND_ERROR "Unknown target option \"${OPTION}\", don't know what to do with option \"no-${OPTION}\"")
+            endif()
+            return()
         endif()
+
+        # Has it already been set or suppressed?
+        list(FIND _SUPPRESSED${_INTERFACE}_SETTINGS "${OPTION}" _IDX)
+        if(NOT _IDX EQUAL -1)
+            list(FIND _CURRENT${_INTERFACE}_SETTINGS_0 "${OPTION}" _IDX)
+            if(NOT _IDX EQUAL -1)
+                message(WARNING "Cannot suppress option \"${OPTION}\" because it was enabled in a previous call to cmakeshift_target_compile_settings().")
+                return()
+            endif()
+            return()
+        endif()
+
+        list(APPEND _SUPPRESSED${_INTERFACE}_SETTINGS "${OPTION}")
     endfunction()
 
     function(CMAKESHIFT_TARGET_COMPILE_SETTING_APPLY_ TARGET_NAME SCOPE OPTION0)
+        if(SCOPE STREQUAL INTERFACE)
+            set(_INTERFACE "_INTERFACE")
+        else()
+            set(_INTERFACE "")
+        endif()
+
         if(OPTION0 MATCHES "^\\$<(.+):([A-Za-z-]+)>$")
             set(LB "$<${CMAKE_MATCH_1}:")
             set(RB ">")
@@ -144,14 +181,36 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             return()
         endif()
 
-        set(FOUND FALSE)
+        # Is it a cumulative setting?
+        list(FIND _KNOWN_CUMULATIVE_SETTINGS "${OPTION}" _IDX)
+        if(NOT _IDX EQUAL -1)
+            # Recur and set all settings that match the stem.
+            foreach(_SETTING IN LISTS _KNOWN_SETTINGS)
+                if(_SETTING MATCHES "^${OPTION}-[A-Za-z-]+$")
+                    cmakeshift_target_compile_setting_apply_(${TARGET_NAME} ${SCOPE} ${_SETTING})
+                    set(_CURRENT${_INTERFACE}_SETTINGS "${_CURRENT${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
+                    set(_SUPPRESSED${_INTERFACE}_SETTINGS "${_SUPPRESSED${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
+                endif()
+            endforeach()
+            return()
+        endif()
 
-        # buggy stdlib workarounds
-        set(HAVE_UBSAN FALSE)
-        set(HAVE_RTC_STDLIB FALSE)
+        # Is the setting known?
+        list(FIND _KNOWN_SETTINGS "${OPTION}" _IDX)
+        if(_IDX EQUAL -1)
+            message(SEND_ERROR "Unknown target option \"${OPTION}\"")
+            return()
+        endif()
 
-        if((OPTION STREQUAL "default" OR OPTION STREQUAL "default-base") AND NOT _NO_DEFAULT_BASE)
-            set(FOUND TRUE)
+        # Has it already been set or suppressed?
+        list(FIND _SUPPRESSED${_INTERFACE}_SETTINGS "${OPTION}" _IDX)
+        if(NOT _IDX EQUAL -1)
+            return()
+        endif()
+
+        set(_SETTING_SET TRUE)
+
+        if(OPTION STREQUAL "default-base")
             # default options everyone can agree on
             if(MSVC)
                 # enable /bigobj switch to permit more than 2^16 COMDAT sections per .obj file (can be useful in heavily templatized code)
@@ -160,26 +219,20 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
                 # remove unreferenced COMDATs to improve linker throughput
                 target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/Zc:inline${RB}") # available since pre-modern VS 2013 Update 2
             endif()
-        endif()
 
-        if((OPTION STREQUAL "default" OR OPTION STREQUAL "default-utf8-source") AND NOT _NO_DEFAULT_UTF8_SOURCE)
-            set(FOUND TRUE)
+        elseif(OPTION STREQUAL "default-utf8-source")
             # source files use UTF-8 encoding
             if(MSVC)
                 target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/utf-8${RB}")
             endif()
-        endif()
 
-        if((OPTION STREQUAL "default" OR OPTION STREQUAL "default-windows-unicode") AND NOT _NO_DEFAULT_WINDOWS_UNICODE)
-            set(FOUND TRUE)
+        elseif(OPTION STREQUAL "default-windows-unicode")
             # UNICODE and _UNICODE are defined on Windows
             if(WIN32)
                 target_compile_definitions(${TARGET_NAME} ${SCOPE} "${LB}$<$<PLATFORM_ID:Windows>:UNICODE>${RB}" "${LB}$<$<PLATFORM_ID:Windows>:_UNICODE>${RB}")
             endif()
-        endif()
 
-        if((OPTION STREQUAL "default" OR OPTION STREQUAL "default-triplet") AND NOT _NO_DEFAULT_TRIPLET)
-            set(FOUND TRUE)
+        elseif(OPTION STREQUAL "default-triplet")
             # heed linking options of selected Vcpkg triplet
             if(MSVC AND VCPKG_CRT_LINKAGE)
                 get_target_property(TARGET_TYPE ${TARGET_NAME} TYPE)
@@ -204,10 +257,8 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
                     cmakeshift_update_cache_variable_(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE_NEW}")
                 endif()
             endif()
-        endif()
 
-        if((OPTION STREQUAL "default" OR OPTION STREQUAL "default-conformance") AND NOT _NO_DEFAULT_CONFORMANCE)
-            set(FOUND TRUE)
+        elseif(OPTION STREQUAL "default-conformance")
             # configure compilers to be ISO C++ conformant
 
             # disable language extensions
@@ -232,10 +283,8 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
                     target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/Zc:__cplusplus${RB}") # available since VS 2017 15.7
                 endif()
             endif()
-        endif()
 
-        if((OPTION STREQUAL "default" OR OPTION STREQUAL "default-debugjustmycode") AND NOT _NO_DEFAULT_DEBUGJMC)
-            set(FOUND TRUE)
+        elseif(OPTION STREQUAL "default-debugjustmycode")
             # enable debugging aids
 
             if(MSVC)
@@ -244,10 +293,8 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
                     target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<CONFIG:Debug>:/JMC>${RB}") # available since VS 2017 15.8
                 endif()
             endif()
-        endif()
 
-        if((OPTION STREQUAL "default" OR OPTION STREQUAL "default-shared") AND NOT _NO_DEFAULT_SHARED)
-            set(FOUND TRUE)
+        elseif(OPTION STREQUAL "default-shared")
             # don't export symbols from shared object libraries unless explicitly annotated
             get_property(_ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
             foreach(LANG IN ITEMS C CXX CUDA)
@@ -256,16 +303,12 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
                     set_target_properties(${TARGET_NAME} PROPERTIES ${LANG}_VISIBILITY_PRESET hidden)
                 endif()
             endforeach()
-        endif()
 
-        if(OPTION STREQUAL "hidden-inline" AND NOT _NO_HIDDEN_INLINE)
-            set(FOUND TRUE)
+        elseif(OPTION STREQUAL "hidden-inline")
             # don't export inline functions
             set_target_properties(${TARGET_NAME} PROPERTIES VISIBILITY_INLINES_HIDDEN TRUE)
-        endif()
 
-        if(OPTION STREQUAL "pedantic" AND NOT _NO_PEDANTIC)
-            set(FOUND TRUE)
+        elseif(OPTION STREQUAL "pedantic")
             # highest sensible level for warnings and diagnostics
             if(MSVC)
                 # remove "/Wx" from CMAKE_CXX_FLAGS if present, as VC++ doesn't tolerate more than one "/Wx" flag
@@ -277,20 +320,16 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
                 target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}-Wall${RB}" "${LB}-Wextra${RB}" "${LB}-pedantic${RB}")
             endif()
-        endif()
 
-        if(OPTION STREQUAL "fatal-errors" AND NOT _NO_FATAL_ERRORS)
-            set(FOUND TRUE)
+        elseif(OPTION STREQUAL "fatal-errors")
             # every error is fatal; stop after reporting first error
             if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
                 target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}-fmax-errors=1${RB}")
             elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
                 target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}-ferror-limit=1${RB}")
             endif()
-        endif()
 
-        if(OPTION STREQUAL "disable-annoying-warnings" AND NOT _NO_DISABLE_ANNOYING_WARNINGS)
-            set(FOUND TRUE)
+        elseif(OPTION STREQUAL "disable-annoying-warnings")
             # disable annoying warnings
             if(MSVC)
                 # C4324 (structure was padded due to alignment specifier)
@@ -300,10 +339,8 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
                 target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}-Wno-unknown-pragmas${RB}")
             endif()
-        endif()
 
-        if((OPTION STREQUAL "runtime-checks" OR OPTION STREQUAL "runtime-checks-stack") AND NOT _NO_RTC_STACK)
-            set(FOUND TRUE)
+        elseif(OPTION STREQUAL "runtime-checks-stack")
             if(MSVC)
                 # VC++ already enables stack frame run-time error checking and detection of uninitialized values by default in debug builds
 
@@ -316,19 +353,15 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
                 # enable stack protector
                 target_compile_options(${TARGET_NAME} PRIVATE "${LB}-fstack-protector${RB}")
             endif()
-        endif()
 
-        if((OPTION STREQUAL "runtime-checks" OR OPTION STREQUAL "runtime-checks-asan") AND NOT _NO_RTC_ASAN)
-            set(FOUND TRUE)
+        elseif(OPTION STREQUAL "runtime-checks-asan")
             # enable AddressSanitizer
             if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
                 target_compile_options(${TARGET_NAME} PRIVATE "${LB}-fsanitize=address${RB}")
                 target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=address${RB}")
             endif()
-        endif()
 
-        if((OPTION STREQUAL "runtime-checks" OR OPTION STREQUAL "runtime-checks-ubsan") AND NOT _NO_RTC_UBSAN)
-            set(FOUND TRUE)
+        elseif(OPTION STREQUAL "runtime-checks-ubsan")
             # enable UndefinedBehaviorSanitizer
             if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
                 target_compile_options(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
@@ -336,16 +369,20 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
             elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
                 # UBSan can cause linker errors in Clang 7, and it raises issues in libc++ debugging code
-                if((CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.0) AND NOT HAVE_RTC_STDLIB)
-                    set(HAVE_UBSAN TRUE)
+                list(FIND _CURRENT_SETTINGS "debug-stdlib" _IDX)
+                if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.0)
+                    message("Not enabling UBSan for target \"${TARGET}\" because it can cause linker errors in Clang 6.")
+                    set(_SETTING_SET FALSE)
+                elseif(_IDX EQUAL -1)
+                    message("Not enabling UBSan for target \"${TARGET}\" because it is known to raise issues in libc++ debugging code.")
+                    set(_SETTING_SET FALSE)
+                else()
                     target_compile_options(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
                     target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
                 endif()
             endif()
-        endif()
 
-        if((OPTION STREQUAL "runtime-checks" OR OPTION STREQUAL "runtime-checks-stdlib") AND NOT _NO_RTC_STDLIB)
-            set(FOUND TRUE)
+        elseif(OPTION STREQUAL "debug-stdlib")
             if(MSVC)
                 # enable checked iterators
                 target_compile_definitions(${TARGET_NAME} PRIVATE "${LB}$<$<NOT:$<CONFIG:Debug>>:_ITERATOR_DEBUG_LEVEL=1>${RB}")
@@ -355,17 +392,20 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
                 target_compile_definitions(${TARGET_NAME} PRIVATE "${LB}$<$<CONFIG:Debug>:_GLIBCXX_DEBUG>${RB}")
 
             elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-                # UBSan raises issues in libc++ debugging code
-                if(NOT HAVE_UBSAN)
-                    set(HAVE_RTC_STDLIB TRUE)
+                list(FIND _CURRENT_SETTINGS "runtime-checks-ubsan" _IDX)
+                if(_IDX EQUAL -1)
+                    message("Not enabling standard library debug mode for target \"${TARGET}\" because it uses UBSan, which is known to raise issues in libc++ debugging code.")
+                    set(_SETTING_SET FALSE)
+                else()
                     # enable libc++ debug mode
                     target_compile_definitions(${TARGET_NAME} PRIVATE "${LB}$<IF:$<CONFIG:Debug>,_LIBCPP_DEBUG=1,_LIBCPP_DEBUG=0>${RB}")
                 endif()
             endif()
         endif()
 
-        if(NOT FOUND)
-            message(SEND_ERROR "Unknown target option \"${OPTION}\"")
+        if(_SETTING_SET)
+            set(_CURRENT${_INTERFACE}_SETTINGS "${_CURRENT${_INTERFACE}_SETTINGS}" "${OPTION}" PARENT_SCOPE)
+            set(_SUPPRESSED${_INTERFACE}_SETTINGS "${_SUPPRESSED${_INTERFACE}_SETTINGS}" "${OPTION}" PARENT_SCOPE)
         endif()
     endfunction()
 
@@ -377,23 +417,23 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         message(SEND_ERROR "Invalid argument keywords \"${SCOPE_UNPARSED_ARGUMENTS}\"; expected PRIVATE, INTERFACE, or PUBLIC")
     endif()
 
-    foreach(arg IN LISTS SCOPE_PRIVATE)
+    foreach(arg IN LISTS SCOPE_PRIVATE SCOPE_PUBLIC)
         cmakeshift_target_compile_setting_accumulate_(${TARGET_NAME} PRIVATE "${arg}")
     endforeach()
-    foreach(arg IN LISTS SCOPE_INTERFACE)
+    foreach(arg IN LISTS SCOPE_INTERFACE SCOPE_PUBLIC)
         cmakeshift_target_compile_setting_accumulate_(${TARGET_NAME} INTERFACE "${arg}")
     endforeach()
-    foreach(arg IN LISTS SCOPE_PUBLIC)
-        cmakeshift_target_compile_setting_accumulate_(${TARGET_NAME} PUBLIC "${arg}")
-    endforeach()
 
-    foreach(arg IN LISTS SCOPE_PRIVATE)
+    foreach(arg IN LISTS SCOPE_PRIVATE SCOPE_PUBLIC)
         cmakeshift_target_compile_setting_apply_(${TARGET_NAME} PRIVATE "${arg}")
     endforeach()
-    foreach(arg IN LISTS SCOPE_INTERFACE)
+    foreach(arg IN LISTS SCOPE_INTERFACE SCOPE_PUBLIC)
         cmakeshift_target_compile_setting_apply_(${TARGET_NAME} INTERFACE "${arg}")
     endforeach()
-    foreach(arg IN LISTS SCOPE_PUBLIC)
-        cmakeshift_target_compile_setting_apply_(${TARGET_NAME} PUBLIC "${arg}")
-    endforeach()
+
+    set_target_properties(${TARGET_NAME}
+        PROPERTIES
+            CMAKESHIFT_COMPILE_SETTINGS "${_CURRENT_SETTINGS}"
+            CMAKESHIFT_INTERFACE_COMPILE_SETTINGS "${_CURRENT_INTERFACE_SETTINGS}")
+
 endfunction()
