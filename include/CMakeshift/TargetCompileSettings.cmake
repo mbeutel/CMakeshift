@@ -127,10 +127,8 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         string(TOLOWER "${OPTION1}" OPTION)
 
         # Is the setting known?
-        list(FIND _KNOWN_SETTINGS "${OPTION}" _IDX)
-        if(_IDX EQUAL -1)
-            list(FIND _KNOWN_CUMULATIVE_SETTINGS "${OPTION}" _IDX)
-            if(NOT _IDX EQUAL -1)
+        if(NOT "${OPTION}" IN_LIST _KNOWN_SETTINGS)
+            if("${OPTION}" IN_LIST _KNOWN_CUMULATIVE_SETTINGS)
                 message(SEND_ERROR "\"no-${OPTION}\": Cannot suppress a cumulative option")
             else()
                 message(SEND_ERROR "Unknown target option \"${OPTION}\", don't know what to do with option \"no-${OPTION}\"")
@@ -139,12 +137,9 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         endif()
 
         # Has it already been set or suppressed?
-        list(FIND _SUPPRESSED${_INTERFACE}_SETTINGS "${OPTION}" _IDX)
-        if(NOT _IDX EQUAL -1)
-            list(FIND _CURRENT${_INTERFACE}_SETTINGS_0 "${OPTION}" _IDX)
-            if(NOT _IDX EQUAL -1)
+        if("${OPTION}" IN_LIST _SUPPRESSED${_INTERFACE}_SETTINGS)
+            if("${OPTION}" IN_LIST _CURRENT${_INTERFACE}_SETTINGS_0)
                 message(WARNING "Cannot suppress option \"${OPTION}\" because it was enabled in a previous call to cmakeshift_target_compile_settings().")
-                return()
             endif()
             return()
         endif()
@@ -182,8 +177,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         endif()
 
         # Is it a cumulative setting?
-        list(FIND _KNOWN_CUMULATIVE_SETTINGS "${OPTION}" _IDX)
-        if(NOT _IDX EQUAL -1)
+        if("${OPTION}" IN_LIST _KNOWN_CUMULATIVE_SETTINGS)
             # Recur and set all settings that match the stem.
             foreach(_SETTING IN LISTS _KNOWN_SETTINGS)
                 if(_SETTING MATCHES "^${OPTION}-[A-Za-z-]+$")
@@ -196,15 +190,13 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         endif()
 
         # Is the setting known?
-        list(FIND _KNOWN_SETTINGS "${OPTION}" _IDX)
-        if(_IDX EQUAL -1)
+        if(NOT "${OPTION}" IN_LIST _KNOWN_SETTINGS)
             message(SEND_ERROR "Unknown target option \"${OPTION}\"")
             return()
         endif()
 
         # Has it already been set or suppressed?
-        list(FIND _SUPPRESSED${_INTERFACE}_SETTINGS "${OPTION}" _IDX)
-        if(NOT _IDX EQUAL -1)
+        if("${OPTION}" IN_LIST _SUPPRESSED${_INTERFACE}_SETTINGS)
             return()
         endif()
 
@@ -298,8 +290,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             # don't export symbols from shared object libraries unless explicitly annotated
             get_property(_ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
             foreach(LANG IN ITEMS C CXX CUDA)
-                list(FIND _ENABLED_LANGUAGES "${LANG}" _RESULT)
-                if(NOT _RESULT EQUAL -1)
+                if("${LANG}" IN_LIST _ENABLED_LANGUAGES)
                     set_target_properties(${TARGET_NAME} PROPERTIES ${LANG}_VISIBILITY_PRESET hidden)
                 endif()
             endforeach()
