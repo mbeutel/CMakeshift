@@ -37,6 +37,7 @@ define_property(TARGET
 #
 #     default                       default options everyone can agree on:
 #         default-base                  uncontroversial settings
+#         default-output-directory      place executables and shared libraries in ${PROJECT_BINARY_DIR}
 #         default-utf8-source           source files use UTF-8 encoding
 #         default-windows-unicode       UNICODE and _UNICODE are defined on Windows
 #         default-triplet               heed linking options of selected Vcpkg triplet
@@ -80,6 +81,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
     set(_KNOWN_SETTINGS
         "default-base"
+        "default-output-directory"
         "default-utf8-source"
         "default-windows-unicode"
         "default-triplet"
@@ -210,6 +212,13 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
                 # remove unreferenced COMDATs to improve linker throughput
                 target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/Zc:inline${RB}") # available since pre-modern VS 2013 Update 2
+            endif()
+
+        elseif(OPTION STREQUAL "default-output-directory")
+            # place binaries in ${PROJECT_BINARY_DIR}
+            get_target_property(_TARGET_TYPE ${TARGET_NAME} TYPE)
+            if(_TARGET_TYPE STREQUAL SHARED_LIBRARY OR _TARGET_TYPE STREQUAL MODULE_LIBRARY OR _TARGET_TYPE STREQUAL EXECUTABLE)
+                set_target_properties(${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}" LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
             endif()
 
         elseif(OPTION STREQUAL "default-utf8-source")
