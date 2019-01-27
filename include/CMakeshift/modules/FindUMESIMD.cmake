@@ -1,3 +1,7 @@
+# #################################################################################
+# Note (shuell): Original source of this file:                                    #
+#   https://github.com/root-project/veccore/blob/master/cmake/FindUMESIMD.cmake   #
+# #################################################################################
 #.rst:
 # FindUMESIMD
 # -----------
