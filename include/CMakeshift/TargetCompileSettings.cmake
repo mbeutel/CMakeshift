@@ -56,10 +56,10 @@ define_property(TARGET
 #
 #     Prefixing a sub-option with "no-" suppresses it when the summary option is used:
 #
-#         # enables all options in "default" except for "default-debugging"
+#         # enables all options in "default" except for "default-debugjustmycode"
 #         cmakeshift_target_compile_settings(foo
 #             PRIVATE
-#                 default no-default-debugging)
+#                 default no-default-debugjustmycode)
 #
 #     Note that generator expressions are not supported for suppressed options.
 #
