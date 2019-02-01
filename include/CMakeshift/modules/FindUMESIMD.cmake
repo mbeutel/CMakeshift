@@ -72,6 +72,11 @@ if(UMESIMD_FOUND)
     add_library(UMESIMD::UMESIMD INTERFACE IMPORTED)
     set_target_properties(UMESIMD::UMESIMD PROPERTIES
       INTERFACE_INCLUDE_DIRECTORIES "${UMESIMD_INCLUDE_DIRS}")
+    # Workaround for gcc7 bugfix for bug which still exists in gcc8
+    if(CMAKE_COMPILER_IS_GNUCXX AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 8.0 AND CMAKE_CXX_COMPILER_VERSION
+        VERSION_LESS_EQUAL 8.9)
+      target_compile_definitions(UMESIMD::UMESIMD INTERFACE WA_GCC_INTR_SUPPORT_7_1)
+    endif()
   endif()
 endif()
 
