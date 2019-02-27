@@ -366,12 +366,12 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
                 target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
 
             elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-                # UBSan can cause linker errors in Clang 7, and it raises issues in libc++ debugging code
-                if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 7.0)
-                    message("Not enabling UBSan for target \"${TARGET}\" because it can cause linker errors in Clang 6.")
+                # UBSan can cause linker errors in Clang 6 and 7, and it raises issues in libc++ debugging code
+                if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
+                    message("Not enabling UBSan for target \"${TARGET_NAME}\" because it can cause linker errors in Clang 6 and 7.")
                     set(_SETTING_SET FALSE)
                 elseif("debug-stdlib" IN_LIST _CURRENT${_INTERFACE}_SETTINGS)
-                    message("Not enabling UBSan for target \"${TARGET}\" because it is known to raise issues in libc++ debugging code.")
+                    message("Not enabling UBSan for target \"${TARGET_NAME}\" because it is known to raise issues in libc++ debugging code.")
                     set(_SETTING_SET FALSE)
                 else()
                     target_compile_options(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
