@@ -35,24 +35,28 @@ define_property(TARGET
 #
 # Supported values for <OPT>:
 #
-#     default                       default options everyone can agree on:
-#         default-base                  uncontroversial settings
-#         default-output-directory      place executables and shared libraries in ${PROJECT_BINARY_DIR}
-#         default-utf8-source           source files use UTF-8 encoding
-#         default-windows-unicode       UNICODE and _UNICODE are defined on Windows
-#         default-triplet               heed linking options of selected Vcpkg triplet
-#         default-conformance           conformant behavior
-#         default-debugjustmycode       debugging convenience: "just my code"
-#         default-shared                export from shared objects is opt-in (via attribute or declspec)
-#     hidden-inline                 do not export inline functions (non-conformant but usually sane)
-#     pedantic                      increase warning level
-#     fatal-errors                  have the compiler stop at the first error
-#     disable-annoying-warnings     suppress annoying warnings (e.g. unknown pragma, secure CRT)
-#     runtime-checks                enable runtime checks:
-#         runtime-checks-stack          enable stack guard
-#         runtime-checks-asan           enable address sanitizer
-#         runtime-checks-ubsan          enable UB sanitizer
-#     debug-stdlib                  enable debug mode of standard library
+#     default                           default options everyone can agree on:
+#         default-base                      uncontroversial settings
+#         default-output-directory          place executables and shared libraries in ${PROJECT_BINARY_DIR}
+#         default-utf8-source               source files use UTF-8 encoding
+#         default-windows-unicode           UNICODE and _UNICODE are defined on Windows
+#         default-triplet                   heed linking options of selected Vcpkg triplet
+#         default-conformance               conformant behavior
+#         default-debugjustmycode           debugging convenience: "just my code"
+#         default-shared                    export from shared objects is opt-in (via attribute or declspec)
+#     hidden-inline                     do not export inline functions (non-conformant but usually sane)
+#     fatal-errors                      have the compiler stop at the first error
+#   D pedantic                          increase warning level
+#   D disable-annoying-warnings         suppress annoying warnings (e.g. unknown pragma, secure CRT)
+#     diagnostics                       default diagnostic settings
+#         diagnostics-pedantic          increase warning level to pedantic level
+#         diagnostics-paranoid          increase warning level to paranoid level
+#         diagnostics-disable-annoying      suppress annoying warnings (e.g. unknown pragma, secure CRT, struct padding)
+#     runtime-checks                    enable runtime checks:
+#         runtime-checks-stack              enable stack guard
+#         runtime-checks-asan               enable address sanitizer
+#         runtime-checks-ubsan              enable UB sanitizer
+#     debug-stdlib                      enable debug mode of standard library
 #
 #     Prefixing a sub-option with "no-" suppresses it when the summary option is used:
 #
@@ -77,6 +81,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
     set(_KNOWN_CUMULATIVE_SETTINGS
         "default"
+        "diagnostics"
         "runtime-checks")
 
     set(_KNOWN_SETTINGS
@@ -89,9 +94,12 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         "default-debugjustmycode"
         "default-shared"
         "hidden-inline"
-        "pedantic"
         "fatal-errors"
+        "pedantic"
         "disable-annoying-warnings"
+        "diagnostics-pedantic"
+        "diagnostics-paranoid"
+        "diagnostics-disable-annoying"
         "runtime-checks-stack"
         "runtime-checks-asan"
         "runtime-checks-ubsan"
@@ -306,7 +314,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             # don't export inline functions
             set_target_properties(${TARGET_NAME} PROPERTIES VISIBILITY_INLINES_HIDDEN TRUE)
 
-        elseif(OPTION STREQUAL "pedantic")
+        elseif(OPTION STREQUAL "pedantic" OR OPTION STREQUAL "diagnostics-pedantic")
             # highest sensible level for warnings and diagnostics
             if(MSVC)
                 # remove "/Wx" from CMAKE_CXX_FLAGS if present, as VC++ doesn't tolerate more than one "/Wx" flag
@@ -319,6 +327,16 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
                 target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}-Wall${RB}" "${LB}-Wextra${RB}" "${LB}-pedantic${RB}")
             endif()
 
+        elseif(OPTION STREQUAL "diagnostics-paranoid")
+            # enable extra paranoid warnings
+            if(MSVC)
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/w44062${RB}") # enumerator 'identifier' in a switch of enum 'enumeration' is not handled
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/w44242${RB}") # 'identifier': conversion from 'type1' to 'type2', possible loss of data
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/w44254${RB}") # 'operator': conversion from 'type1' to 'type2', possible loss of data
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/w44265${RB}") # 'class': class has virtual functions, but destructor is not virtual
+                #target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/w44365${RB}") # 'action': conversion from 'type_1' to 'type_2', signed/unsigned mismatch (cannot enable this one because it flags `container[signed_index]`)
+            endif()
+
         elseif(OPTION STREQUAL "fatal-errors")
             # every error is fatal; stop after reporting first error
             if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
@@ -327,7 +345,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
                 target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}-ferror-limit=1${RB}")
             endif()
 
-        elseif(OPTION STREQUAL "disable-annoying-warnings")
+        elseif(OPTION STREQUAL "disable-annoying-warnings" OR OPTION STREQUAL "diagnostics-disable-annoying")
             # disable annoying warnings
             if(MSVC)
                 # C4324 (structure was padded due to alignment specifier)
