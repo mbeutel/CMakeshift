@@ -5,14 +5,13 @@ include("@SCOPE_PROJECT_BINARY_DIR@/@SCOPE_PROJECT@ConfigVersion-generic.cmake")
 
 # If not using a multi-config generator, check that build configurations match when referencing exported
 # build directories.
-if(NOT @SCOPE_INTERFACE@ AND NOT @GENERATOR_IS_MULTI_CONFIG@)
+if(NOT @SCOPE_INTERFACE@ AND NOT @_GENERATOR_IS_MULTI_CONFIG@)
     if(GENERATOR_IS_MULTI_CONFIG)
         set(PACKAGE_VERSION "${PACKAGE_VERSION} single-config")
         set(PACKAGE_VERSION_UNSUITABLE TRUE)
         return()
-    elseif((NOT "${CMAKE_BUILD_TYPE}" STREQUAL "@CMAKE_BUILD_TYPE@")
-            OR ("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT "@CMAKE_BUILD_TYPE@" STREQUAL "Debug")
-            OR (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND "@CMAKE_BUILD_TYPE@" STREQUAL "Debug"))
+    elseif(("${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND NOT "@CMAKE_BUILD_TYPE@" STREQUAL "Debug")
+           OR (NOT "${CMAKE_BUILD_TYPE}" STREQUAL "Debug" AND "@CMAKE_BUILD_TYPE@" STREQUAL "Debug"))
         set(PACKAGE_VERSION "${PACKAGE_VERSION} single-config CMAKE_BUILD_TYPE=@CMAKE_BUILD_TYPE@")
         set(PACKAGE_VERSION_UNSUITABLE TRUE)
         return()
