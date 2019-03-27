@@ -191,7 +191,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             # Recur and set all settings that match the stem.
             foreach(_SETTING IN LISTS _KNOWN_SETTINGS)
                 if(_SETTING MATCHES "^${OPTION}-[A-Za-z-]+$")
-                    cmakeshift_target_compile_setting_apply_(${TARGET_NAME} ${SCOPE} ${_SETTING})
+                    cmakeshift_target_compile_setting_apply_(${TARGET_NAME} ${SCOPE} "${LB}${_SETTING}${RB}")
                     set(_CURRENT${_INTERFACE}_SETTINGS "${_CURRENT${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
                     set(_SUPPRESSED${_INTERFACE}_SETTINGS "${_SUPPRESSED${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
                 endif()
