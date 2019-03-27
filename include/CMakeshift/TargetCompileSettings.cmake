@@ -24,8 +24,31 @@ define_property(TARGET
     FULL_DOCS "compile settings used for target")
 define_property(TARGET
     PROPERTY CMAKESHIFT_INTERFACE_COMPILE_SETTINGS
+    BRIEF_DOCS "compile settings used for target interface"
+    FULL_DOCS "compile settings used for target interface")
+define_property(TARGET
+    PROPERTY CMAKESHIFT_RAW_COMPILE_SETTINGS
     BRIEF_DOCS "compile settings used for target"
     FULL_DOCS "compile settings used for target")
+define_property(TARGET
+    PROPERTY CMAKESHIFT_INTERFACE_RAW_COMPILE_SETTINGS
+    BRIEF_DOCS "compile settings used for target interface"
+    FULL_DOCS "compile settings used for target interface")
+define_property(TARGET
+    PROPERTY CMAKESHIFT_SUPPRESSED_COMPILE_SETTINGS
+    BRIEF_DOCS "compile settings to be suppressed for target"
+    FULL_DOCS "compile settings to be suppressed for target")
+define_property(TARGET
+    PROPERTY CMAKESHIFT_SUPPRESSED_INTERFACE_COMPILE_SETTINGS
+    BRIEF_DOCS "compile settings to be suppressed for target interface"
+    FULL_DOCS "compile settings to be suppressed for target interface")
+
+
+set(CMAKESHIFT_TRACE_OUTPUT OFF CACHE BOOL "Enable trace output for CMakeshift routines")
+mark_as_advanced(CMAKESHIFT_TRACE_OUTPUT)
+
+set(CMAKESHIFT_COMPILE_SETTINGS "" CACHE STRING "Default compile settings applied to all targets with settings")
+set(CMAKESHIFT_INTERFACE_COMPILE_SETTINGS "" CACHE STRING "Default interface compile settings applied to all targets with settings")
 
 
 # Set known compile options for the target. 
@@ -79,6 +102,14 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         set(${VAR_NAME} ${VALUE} CACHE ${VAR_TYPE} "${HELP_STRING}" FORCE)
     endfunction()
 
+    function(CMAKESHIFT_GET_TARGET_PROPERTY_ VAR_NAME PROP_NAME)
+        get_target_property(_VAR ${TARGET_NAME} ${PROP_NAME})
+        if(NOT _VAR)
+            set(_VAR "") # set to "" rather than "*-NOTFOUND" if target property doesn't exist
+        endif()
+        set(${VAR_NAME} "${_VAR}" PARENT_SCOPE)
+    endfunction()
+
     set(_KNOWN_CUMULATIVE_SETTINGS
         "default"
         "diagnostics"
@@ -105,20 +136,27 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         "runtime-checks-ubsan"
         "debug-stdlib")
 
+    set(_TARGET_FIRST_TOUCH FALSE)
+
     get_target_property(_CURRENT_SETTINGS ${TARGET_NAME} CMAKESHIFT_COMPILE_SETTINGS)
     if(NOT _CURRENT_SETTINGS)
+        set(_TARGET_FIRST_TOUCH TRUE) # no settings have been set on the target before; remember this so we can apply global settings
         set(_CURRENT_SETTINGS "") # set to "NOTFOUND" if target property doesn't exist
     endif()
-    set(_CURRENT_SETTINGS_0 "${_CURRENT_SETTINGS}")
-    get_target_property(_CURRENT_INTERFACE_SETTINGS_0 ${TARGET_NAME} CMAKESHIFT_INTERFACE_COMPILE_SETTINGS)
-    get_target_property(_CURRENT_INTERFACE_SETTINGS ${TARGET_NAME} CMAKESHIFT_INTERFACE_COMPILE_SETTINGS)
-    if(NOT _CURRENT_INTERFACE_SETTINGS)
-        set(_CURRENT_INTERFACE_SETTINGS "") # set to "NOTFOUND" if target property doesn't exist
+    cmakeshift_get_target_property_(_CURRENT_INTERFACE_SETTINGS CMAKESHIFT_INTERFACE_COMPILE_SETTINGS)
+    cmakeshift_get_target_property_(_RAW_SETTINGS CMAKESHIFT_RAW_COMPILE_SETTINGS)
+    cmakeshift_get_target_property_(_RAW_INTERFACE_SETTINGS CMAKESHIFT_INTERFACE_RAW_COMPILE_SETTINGS)
+    cmakeshift_get_target_property_(_SUPPRESSED_SETTINGS CMAKESHIFT_SUPPRESSED_COMPILE_SETTINGS)
+    cmakeshift_get_target_property_(_SUPPRESSED_INTERFACE_SETTINGS CMAKESHIFT_SUPPRESSED_INTERFACE_COMPILE_SETTINGS)
+    if(CMAKESHIFT_TRACE_OUTPUT)
+        message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Previously applied settings: \"${_CURRENT_SETTINGS}\"")
+        message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Previously applied interface settings: \"${_CURRENT_INTERFACE_SETTINGS}\"")
+        message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Previously suppressed settings: \"${_SUPPRESSED_SETTINGS}\"")
+        message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Previously suppressed interface settings \"${_SUPPRESSED_INTERFACE_SETTINGS}\"")
     endif()
-    set(_CURRENT_INTERFACE_SETTINGS_0 "${_CURRENT_INTERFACE_SETTINGS}")
 
-    set(_SUPPRESSED_SETTINGS ${_CURRENT_SETTINGS})
-    set(_SUPPRESSED_INTERFACE_SETTINGS ${_CURRENT_INTERFACE_SETTINGS})
+    set(_RAW_SETTINGS_0 "${_RAW_SETTINGS}")
+    set(_RAW_INTERFACE_SETTINGS_0 "${_RAW_INTERFACE_SETTINGS}")
 
     function(CMAKESHIFT_TARGET_COMPILE_SETTING_ACCUMULATE_ TARGET_NAME SCOPE OPTION0)
         if(SCOPE STREQUAL INTERFACE)
@@ -136,24 +174,42 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         endif()
         string(TOLOWER "${OPTION1}" OPTION)
 
+        # Is it a cumulative setting?
+        if("${OPTION}" IN_LIST _KNOWN_CUMULATIVE_SETTINGS)
+            # Recur and suppress all settings that match the stem.
+            foreach(_SETTING IN LISTS _KNOWN_SETTINGS)
+                if(_SETTING MATCHES "^${OPTION}-[A-Za-z-]+$")
+                    cmakeshift_target_compile_setting_accumulate_(${TARGET_NAME} ${SCOPE} "no-${_SETTING}")
+                    set(_SUPPRESSED${_INTERFACE}_SETTINGS "${_SUPPRESSED${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
+                endif()
+            endforeach()
+            return()
+        endif()
+
         # Is the setting known?
         if(NOT "${OPTION}" IN_LIST _KNOWN_SETTINGS)
-            if("${OPTION}" IN_LIST _KNOWN_CUMULATIVE_SETTINGS)
-                message(SEND_ERROR "\"no-${OPTION}\": Cannot suppress a cumulative option")
-            else()
-                message(SEND_ERROR "Unknown target option \"${OPTION}\", don't know what to do with option \"no-${OPTION}\"")
-            endif()
+            message(SEND_ERROR "Unknown target option \"${OPTION}\", don't know what to do with option \"no-${OPTION}\"")
             return()
         endif()
 
-        # Has it already been set or suppressed?
+        # Has it already been set in a previous call?
+        if("${OPTION}" IN_LIST _RAW${_INTERFACE}_SETTINGS_0)
+            message(WARNING "Cannot suppress option \"${OPTION}\" because it was enabled in a previous call to cmakeshift_target_compile_settings().")
+            return()
+        endif()
+
+        # Has it already been suppressed?
         if("${OPTION}" IN_LIST _SUPPRESSED${_INTERFACE}_SETTINGS)
-            if("${OPTION}" IN_LIST _CURRENT${_INTERFACE}_SETTINGS_0)
-                message(WARNING "Cannot suppress option \"${OPTION}\" because it was enabled in a previous call to cmakeshift_target_compile_settings().")
-            endif()
             return()
         endif()
 
+        if(CMAKESHIFT_TRACE_OUTPUT)
+            if(SCOPE STREQUAL INTERFACE)
+                message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Suppressing interface setting \"${OPTION}\"")
+            else()
+                message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Suppressing setting \"${OPTION}\"")
+            endif()
+        endif()
         list(APPEND _SUPPRESSED${_INTERFACE}_SETTINGS "${OPTION}")
     endfunction()
 
@@ -192,8 +248,8 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             foreach(_SETTING IN LISTS _KNOWN_SETTINGS)
                 if(_SETTING MATCHES "^${OPTION}-[A-Za-z-]+$")
                     cmakeshift_target_compile_setting_apply_(${TARGET_NAME} ${SCOPE} "${LB}${_SETTING}${RB}")
+                    set(_RAW_${_INTERFACE}_SETTINGS "${_RAW${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
                     set(_CURRENT${_INTERFACE}_SETTINGS "${_CURRENT${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
-                    set(_SUPPRESSED${_INTERFACE}_SETTINGS "${_SUPPRESSED${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
                 endif()
             endforeach()
             return()
@@ -206,7 +262,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         endif()
 
         # Has it already been set or suppressed?
-        if("${OPTION}" IN_LIST _SUPPRESSED${_INTERFACE}_SETTINGS)
+        if("${OPTION}" IN_LIST _RAW${_INTERFACE}_SETTINGS OR "${OPTION}" IN_LIST _SUPPRESSED${_INTERFACE}_SETTINGS OR "${LB}${OPTION}${RB}" IN_LIST _CURRENT${_INTERFACE}_SETTINGS)
             return()
         endif()
 
@@ -386,10 +442,10 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
                 # UBSan can cause linker errors in Clang 6 and 7, and it raises issues in libc++ debugging code
                 if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
-                    message("Not enabling UBSan for target \"${TARGET_NAME}\" because it can cause linker errors in Clang 6 and 7.")
+                    message(WARNING "Not enabling UBSan for target \"${TARGET_NAME}\" because it can cause linker errors in Clang 6 and 7.")
                     set(_SETTING_SET FALSE)
                 elseif("debug-stdlib" IN_LIST _CURRENT${_INTERFACE}_SETTINGS)
-                    message("Not enabling UBSan for target \"${TARGET_NAME}\" because it is known to raise issues in libc++ debugging code.")
+                    message(WARNING "Not enabling UBSan for target \"${TARGET_NAME}\" because it is known to raise issues in libc++ debugging code.")
                     set(_SETTING_SET FALSE)
                 else()
                     target_compile_options(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
@@ -408,7 +464,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
             elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
                 if("runtime-checks-ubsan" IN_LIST _CURRENT${_INTERFACE}_SETTINGS)
-                    message("Not enabling standard library debug mode for target \"${TARGET}\" because it uses UBSan, which is known to raise issues in libc++ debugging code.")
+                    message(WARNING "Not enabling standard library debug mode for target \"${TARGET}\" because it uses UBSan, which is known to raise issues in libc++ debugging code.")
                     set(_SETTING_SET FALSE)
                 else()
                     # enable libc++ debug mode
@@ -418,8 +474,15 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         endif()
 
         if(_SETTING_SET)
-            set(_CURRENT${_INTERFACE}_SETTINGS "${_CURRENT${_INTERFACE}_SETTINGS}" "${OPTION}" PARENT_SCOPE)
-            set(_SUPPRESSED${_INTERFACE}_SETTINGS "${_SUPPRESSED${_INTERFACE}_SETTINGS}" "${OPTION}" PARENT_SCOPE)
+            if(CMAKESHIFT_TRACE_OUTPUT)
+                if(SCOPE STREQUAL INTERFACE)
+                    message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Applying interface setting \"${LB}${OPTION}${RB}\"")
+                else()
+                    message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Applying setting \"${LB}${OPTION}${RB}\"")
+                endif()
+            endif()
+            list(APPEND _RAW${_INTERFACE}_SETTINGS "${OPTION}" PARENT_SCOPE)
+            list(APPEND _CURRENT${_INTERFACE}_SETTINGS "${LB}${OPTION}${RB}" PARENT_SCOPE)
         endif()
     endfunction()
 
@@ -429,6 +492,12 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
     cmake_parse_arguments(PARSE_ARGV 1 "SCOPE" "${options}" "${oneValueArgs}" "${multiValueArgs}")
     if(SCOPE_UNPARSED_ARGUMENTS)
         message(SEND_ERROR "Invalid argument keywords \"${SCOPE_UNPARSED_ARGUMENTS}\"; expected PRIVATE, INTERFACE, or PUBLIC")
+    endif()
+
+    # Apply global settings if this is the first call to `cmakeshift_target_compile_settings()` for this target.
+    if(_TARGET_FIRST_TOUCH)
+        set(SCOPE_PRIVATE "${CMAKESHIFT_COMPILE_SETTINGS}" "${SCOPE_PRIVATE}")
+        set(SCOPE_INTERFACE "${CMAKESHIFT_INTERFACE_COMPILE_SETTINGS}" "${SCOPE_INTERFACE}")
     endif()
 
     foreach(arg IN LISTS SCOPE_PRIVATE SCOPE_PUBLIC)
@@ -448,6 +517,11 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
     set_target_properties(${TARGET_NAME}
         PROPERTIES
             CMAKESHIFT_COMPILE_SETTINGS "${_CURRENT_SETTINGS}"
-            CMAKESHIFT_INTERFACE_COMPILE_SETTINGS "${_CURRENT_INTERFACE_SETTINGS}")
+            CMAKESHIFT_INTERFACE_COMPILE_SETTINGS "${_CURRENT_INTERFACE_SETTINGS}"
+            CMAKESHIFT_RAW_COMPILE_SETTINGS "${_RAW_SETTINGS}"
+            CMAKESHIFT_RAW_INTERFACE_COMPILE_SETTINGS "${_RAW_INTERFACE_SETTINGS}"
+            CMAKESHIFT_SUPPRESSED_COMPILE_SETTINGS "${_SUPPRESSED_SETTINGS}"
+            CMAKESHIFT_SUPPRESSED_INTERFACE_COMPILE_SETTINGS "${_SUPPRESSED_INTERFACE_SETTINGS}")
 
 endfunction()
+
