@@ -4,20 +4,6 @@
 # Author: Moritz Beutel
 
 
-if(_VCPKG_ROOT_DIR AND VCPKG_TARGET_TRIPLET)
-    include("${_VCPKG_ROOT_DIR}/triplets/${VCPKG_TARGET_TRIPLET}.cmake")
-
-    # set default library linkage according to selected triplet
-    if(VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic")
-        set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared library")
-    elseif(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
-        set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared library")
-    else()
-        message(FATAL_ERROR "Invalid setting for VCPKG_LIBRARY_LINKAGE: \"${VCPKG_LIBRARY_LINKAGE}\". It must be \"static\" or \"dynamic\"")
-    endif()
-endif()
-
-
 define_property(TARGET
     PROPERTY CMAKESHIFT_COMPILE_SETTINGS
     BRIEF_DOCS "compile settings used for target"
@@ -46,8 +32,18 @@ define_property(TARGET
 
 include(CMakeshift/detail/Trace)
 
-set(CMAKESHIFT_COMPILE_SETTINGS "" CACHE STRING "Default compile settings applied to all targets with settings")
-set(CMAKESHIFT_INTERFACE_COMPILE_SETTINGS "" CACHE STRING "Default interface compile settings applied to all targets with settings")
+
+set(CMAKESHIFT_PRIVATE_COMPILE_SETTINGS "" CACHE STRING "Default private compile settings to be applied to all targets with settings")
+set(CMAKESHIFT_PUBLIC_COMPILE_SETTINGS "" CACHE STRING "Default public compile settings to be applied to all targets with settings")
+set(CMAKESHIFT_INTERFACE_COMPILE_SETTINGS "" CACHE STRING "Default interface compile settings to be applied to all targets with settings")
+
+
+set(_CMAKESHIFT_KNOWN_CUMULATIVE_SETTINGS "")
+set(_CMAKESHIFT_KNOWN_SETTINGS "")
+include(CMakeshift/detail/Settings-Default)
+include(CMakeshift/detail/Settings-Diagnostics)
+include(CMakeshift/detail/Settings-RuntimeChecks)
+include(CMakeshift/detail/Settings-Other)
 
 
 # Set known compile options for the target. 
@@ -66,10 +62,10 @@ set(CMAKESHIFT_INTERFACE_COMPILE_SETTINGS "" CACHE STRING "Default interface com
 #         default-conformance               conformant behavior
 #         default-debugjustmycode           debugging convenience: "just my code"
 #         default-shared                    export from shared objects is opt-in (via attribute or declspec)
-#     hidden-inline                     do not export inline functions (non-conformant but usually sane)
+#   D hidden-inline                     do not export inline functions (non-conformant but usually sane) (deprecated; will either disappear or become part of "default")
 #     fatal-errors                      have the compiler stop at the first error
-#   D pedantic                          increase warning level
-#   D disable-annoying-warnings         suppress annoying warnings (e.g. unknown pragma, secure CRT)
+#   D pedantic                          increase warning level (deprecated; use "diagnostics-pedantic" instead)
+#   D disable-annoying-warnings         suppress annoying warnings (e.g. unknown pragma, secure CRT, struct padding) (deprecated; use "diagnostics-disable-annoying" instead)
 #     diagnostics                       default diagnostic settings
 #         diagnostics-pedantic          increase warning level to pedantic level
 #         diagnostics-paranoid          increase warning level to paranoid level
@@ -86,6 +82,8 @@ set(CMAKESHIFT_INTERFACE_COMPILE_SETTINGS "" CACHE STRING "Default interface com
 #         cmakeshift_target_compile_settings(foo
 #             PRIVATE
 #                 default no-default-debugjustmycode)
+#
+#     Settings prefixed with a 'D' are deprecated.
 #
 #     Note that generator expressions are not supported for suppressed options.
 #
@@ -109,32 +107,6 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         set(${VAR_NAME} "${_VAR}" PARENT_SCOPE)
     endfunction()
 
-    set(_KNOWN_CUMULATIVE_SETTINGS
-        "default"
-        "diagnostics"
-        "runtime-checks")
-
-    set(_KNOWN_SETTINGS
-        "default-base"
-        "default-output-directory"
-        "default-utf8-source"
-        "default-windows-unicode"
-        "default-triplet"
-        "default-conformance"
-        "default-debugjustmycode"
-        "default-shared"
-        "hidden-inline"
-        "fatal-errors"
-        "pedantic"
-        "disable-annoying-warnings"
-        "diagnostics-pedantic"
-        "diagnostics-paranoid"
-        "diagnostics-disable-annoying"
-        "runtime-checks-stack"
-        "runtime-checks-asan"
-        "runtime-checks-ubsan"
-        "debug-stdlib")
-
     set(_TARGET_FIRST_TOUCH FALSE)
 
     get_target_property(_CURRENT_SETTINGS ${TARGET_NAME} CMAKESHIFT_COMPILE_SETTINGS)
@@ -157,27 +129,27 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
     set(_RAW_SETTINGS_0 "${_RAW_SETTINGS}")
     set(_RAW_INTERFACE_SETTINGS_0 "${_RAW_INTERFACE_SETTINGS}")
 
-    function(CMAKESHIFT_TARGET_COMPILE_SETTING_ACCUMULATE_ TARGET_NAME SCOPE OPTION0)
+    function(CMAKESHIFT_TARGET_COMPILE_SETTING_ACCUMULATE_ TARGET_NAME SCOPE SETTING0)
         if(SCOPE STREQUAL INTERFACE)
             set(_INTERFACE "_INTERFACE")
         else()
             set(_INTERFACE "")
         endif()
 
-        if(NOT OPTION0 MATCHES "^[Nn][Oo]-([A-Za-z-]+)$")
+        if(NOT SETTING0 MATCHES "^[Nn][Oo]-([A-Za-z-]+)$")
             return()
         endif()
-        set(OPTION1 "${CMAKE_MATCH_1}")
-        if(NOT OPTION1)
+        set(SETTING1 "${CMAKE_MATCH_1}")
+        if(NOT SETTING1)
             return()
         endif()
-        string(TOLOWER "${OPTION1}" OPTION)
+        string(TOLOWER "${SETTING1}" SETTING)
 
         # Is it a cumulative setting?
-        if("${OPTION}" IN_LIST _KNOWN_CUMULATIVE_SETTINGS)
+        if("${SETTING}" IN_LIST _CMAKESHIFT_KNOWN_CUMULATIVE_SETTINGS)
             # Recur and suppress all settings that match the stem.
-            foreach(_SETTING IN LISTS _KNOWN_SETTINGS)
-                if(_SETTING MATCHES "^${OPTION}-[A-Za-z-]+$")
+            foreach(_SETTING IN LISTS _CMAKESHIFT_KNOWN_SETTINGS)
+                if(_SETTING MATCHES "^${SETTING}-[A-Za-z-]+$")
                     cmakeshift_target_compile_setting_accumulate_(${TARGET_NAME} ${SCOPE} "no-${_SETTING}")
                     set(_SUPPRESSED${_INTERFACE}_SETTINGS "${_SUPPRESSED${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
                 endif()
@@ -186,66 +158,68 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         endif()
 
         # Is the setting known?
-        if(NOT "${OPTION}" IN_LIST _KNOWN_SETTINGS)
-            message(SEND_ERROR "Unknown target option \"${OPTION}\", don't know what to do with option \"no-${OPTION}\"")
+        if(NOT "${SETTING}" IN_LIST _CMAKESHIFT_KNOWN_SETTINGS)
+            message(SEND_ERROR "Unknown target option \"${SETTING}\", don't know what to do with option \"no-${SETTING}\"")
             return()
         endif()
 
         # Has it already been set in a previous call?
-        if("${OPTION}" IN_LIST _RAW${_INTERFACE}_SETTINGS_0)
-            message(WARNING "Cannot suppress option \"${OPTION}\" because it was enabled in a previous call to cmakeshift_target_compile_settings().")
+        if("${SETTING}" IN_LIST _RAW${_INTERFACE}_SETTINGS_0)
+            message(WARNING "Cannot suppress option \"${SETTING}\" because it was enabled in a previous call to cmakeshift_target_compile_settings().")
             return()
         endif()
 
         # Has it already been suppressed?
-        if("${OPTION}" IN_LIST _SUPPRESSED${_INTERFACE}_SETTINGS)
+        if("${SETTING}" IN_LIST _SUPPRESSED${_INTERFACE}_SETTINGS)
             return()
         endif()
 
         if(CMAKESHIFT_TRACE_OUTPUT)
             if(SCOPE STREQUAL INTERFACE)
-                message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Suppressing interface setting \"${OPTION}\"")
+                message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Suppressing interface setting \"${SETTING}\"")
             else()
-                message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Suppressing setting \"${OPTION}\"")
+                message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Suppressing setting \"${SETTING}\"")
             endif()
         endif()
-        list(APPEND _SUPPRESSED${_INTERFACE}_SETTINGS "${OPTION}")
+        list(APPEND _SUPPRESSED${_INTERFACE}_SETTINGS "${SETTING}")
     endfunction()
 
-    function(CMAKESHIFT_TARGET_COMPILE_SETTING_APPLY_ TARGET_NAME SCOPE OPTION0)
+    function(CMAKESHIFT_TARGET_COMPILE_SETTING_APPLY_ TARGET_NAME SCOPE SETTING0)
         if(SCOPE STREQUAL INTERFACE)
             set(_INTERFACE "_INTERFACE")
         else()
             set(_INTERFACE "")
         endif()
 
-        if(OPTION0 MATCHES "^\\$<(.+):([A-Za-z-]+)>$")
+        if(SETTING0 MATCHES "^\\$<(.+):([A-Za-z-]+)>$")
             set(LB "$<${CMAKE_MATCH_1}:")
             set(RB ">")
-            set(OPTION1 "${CMAKE_MATCH_2}")
+            set(SETTING1 "${CMAKE_MATCH_2}")
         else()
             set(LB "")
             set(RB "")
-            set(OPTION1 "${OPTION0}")
+            set(SETTING1 "${SETTING0}")
         endif()
 
-        if(NOT OPTION1)
+        if(NOT SETTING1)
             return()
         endif()
-        string(TOLOWER "${OPTION1}" OPTION)
+        string(TOLOWER "${SETTING1}" SETTING)
 
-        if(OPTION MATCHES "^no-[A-Za-z-]+$")
+        if(SETTING MATCHES "^no-[A-Za-z-]+$")
             if(NOT LB STREQUAL "")
-                message(SEND_ERROR "\"${OPTION0}\": Cannot use generator expression with suppressed options")
+                message(SEND_ERROR "\"${SETTING0}\": Cannot use generator expression with suppressed options")
             endif()
             return()
         endif()
 
+        set(VAL "")
+
         # Is it a cumulative setting?
-        if("${OPTION}" IN_LIST _KNOWN_CUMULATIVE_SETTINGS)
+        if("${SETTING}" IN_LIST _CMAKESHIFT_KNOWN_CUMULATIVE_SETTINGS)
             # Recur and set all settings that match the stem.
-            foreach(_SETTING IN LISTS _KNOWN_SETTINGS)
-                if(_SETTING MATCHES "^${OPTION}-[A-Za-z-]+$")
+            foreach(_SETTING IN LISTS _CMAKESHIFT_KNOWN_SETTINGS)
+                if(_SETTING MATCHES "^${SETTING}-[A-Za-z-]+$") # this implicitly skips settings with arguments, e.g. "cpu-architecture="
                     cmakeshift_target_compile_setting_apply_(${TARGET_NAME} ${SCOPE} "${LB}${_SETTING}${RB}")
                     set(_RAW_${_INTERFACE}_SETTINGS "${_RAW${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
                     set(_CURRENT${_INTERFACE}_SETTINGS "${_CURRENT${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
@@ -255,233 +229,44 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         endif()
 
         # Is the setting known?
-        if(NOT "${OPTION}" IN_LIST _KNOWN_SETTINGS)
-            message(SEND_ERROR "Unknown target option \"${OPTION}\"")
+        if(NOT "${SETTING}" IN_LIST _CMAKESHIFT_KNOWN_SETTINGS)
+            message(SEND_ERROR "Unknown target option \"${SETTING}\"")
             return()
         endif()
 
         # Has it already been set or suppressed?
-        if("${OPTION}" IN_LIST _RAW${_INTERFACE}_SETTINGS OR "${OPTION}" IN_LIST _SUPPRESSED${_INTERFACE}_SETTINGS OR "${LB}${OPTION}${RB}" IN_LIST _CURRENT${_INTERFACE}_SETTINGS)
+        if("${SETTING}" IN_LIST _RAW${_INTERFACE}_SETTINGS OR "${SETTING}" IN_LIST _SUPPRESSED${_INTERFACE}_SETTINGS OR "${LB}${SETTING}${RB}" IN_LIST _CURRENT${_INTERFACE}_SETTINGS)
             return()
         endif()
 
         set(_SETTING_SET TRUE)
+        _cmakeshift_settings_default(${SETTING} "${VAL}" ${TARGET_NAME} ${SCOPE} "${LB}" "${RB}")
 
-        if(OPTION STREQUAL "default-base")
-            # default options everyone can agree on
-            if(MSVC)
-                # enable /bigobj switch to permit more than 2^16 COMDAT sections per .obj file (can be useful in heavily templatized code)
-                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/bigobj${RB}")
+        if(NOT _SETTING_SET)
+            set(_SETTING_SET TRUE)
+            _cmakeshift_settings_diagnostics(${SETTING} "${VAL}" ${TARGET_NAME} ${SCOPE} "${LB}" "${RB}")
+        endif()
 
-                # remove unreferenced COMDATs to improve linker throughput
-                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/Zc:inline${RB}") # available since pre-modern VS 2013 Update 2
-            endif()
+        if(NOT _SETTING_SET)
+            set(_SETTING_SET TRUE)
+            _cmakeshift_settings_runtime_checks(${SETTING} "${VAL}" ${TARGET_NAME} ${SCOPE} "${LB}" "${RB}")
+        endif()
 
-        elseif(OPTION STREQUAL "default-output-directory")
-            # place binaries in ${PROJECT_BINARY_DIR}
-            get_target_property(_TARGET_TYPE ${TARGET_NAME} TYPE)
-            if(_TARGET_TYPE STREQUAL SHARED_LIBRARY OR _TARGET_TYPE STREQUAL MODULE_LIBRARY OR _TARGET_TYPE STREQUAL EXECUTABLE)
-                set_target_properties(${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}" LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
-            endif()
-
-        elseif(OPTION STREQUAL "default-utf8-source")
-            # source files use UTF-8 encoding
-            if(MSVC)
-                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/utf-8${RB}")
-            endif()
-
-        elseif(OPTION STREQUAL "default-windows-unicode")
-            # UNICODE and _UNICODE are defined on Windows
-            target_compile_definitions(${TARGET_NAME} ${SCOPE} "${LB}$<$<PLATFORM_ID:Windows>:UNICODE>${RB}" "${LB}$<$<PLATFORM_ID:Windows>:_UNICODE>${RB}")
-
-        elseif(OPTION STREQUAL "default-triplet")
-            # heed linking options of selected Vcpkg triplet
-            if(MSVC AND VCPKG_CRT_LINKAGE)
-                get_target_property(_TARGET_TYPE ${TARGET_NAME} TYPE)
-                if(VCPKG_CRT_LINKAGE STREQUAL "dynamic")
-                    set(_CRT_FLAG "D")
-                elseif(VCPKG_CRT_LINKAGE STREQUAL "static")
-                    if(${_TARGET_TYPE} STREQUAL SHARED_LIBRARY)
-                        message(FATAL_ERROR "When building a shared library, VCPKG_CRT_LINKAGE must be set to \"dynamic\". Current setting is \"${VCPKG_CRT_LINKAGE}\"")
-                    endif()
-                    set(_CRT_FLAG "T")
-                else()
-                    message(FATAL_ERROR "Invalid setting for VCPKG_CRT_LINKAGE: \"${VCPKG_CRT_LINKAGE}\". It must be \"static\" or \"dynamic\"")
-                endif()
-
-                # replace dynamic library linking flags with the desired option
-                if(CMAKE_CXX_FLAGS_DEBUG MATCHES "/M(D|T)d")
-                    string(REGEX REPLACE "/M(D|T)d" "/M${_CRT_FLAG}d" CMAKE_CXX_FLAGS_DEBUG_NEW "${CMAKE_CXX_FLAGS_DEBUG}")
-                    cmakeshift_update_cache_variable_(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG_NEW}")
-                endif()
-                if(CMAKE_CXX_FLAGS_RELEASE MATCHES "/M(D|T)")
-                    string(REGEX REPLACE "/M(D|T)" "/M${_CRT_FLAG}" CMAKE_CXX_FLAGS_RELEASE_NEW "${CMAKE_CXX_FLAGS_RELEASE}")
-                    cmakeshift_update_cache_variable_(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE_NEW}")
-                endif()
-            endif()
-
-        elseif(OPTION STREQUAL "default-conformance")
-            # configure compilers to be ISO C++ conformant
-
-            # disable language extensions
-            set_target_properties(${TARGET_NAME} PROPERTIES CXX_EXTENSIONS OFF)
-
-            if(MSVC)
-                # make `volatile` behave as specified by the language standard, as opposed to the quasi-atomic semantics VC++ implements by default
-                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/volatile:iso${RB}")
-
-                # enable permissive mode (prefer already rejuvenated parts of compiler for better conformance)
-                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.10)
-                    target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/permissive-${RB}") # available since VS 2017 15.0
-                endif()
-
-                # enable "extern constexpr" support
-                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.13)
-                    target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/Zc:externConstexpr${RB}") # available since VS 2017 15.6
-                endif()
-
-                # enable updated __cplusplus macro value
-                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.14)
-                    target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/Zc:__cplusplus${RB}") # available since VS 2017 15.7
-                endif()
-            endif()
-
-        elseif(OPTION STREQUAL "default-debugjustmycode")
-            # enable debugging aids
-
-            if(MSVC)
-                # enable Just My Code for debugging convenience
-                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.15)
-                    target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<CONFIG:Debug>:/JMC>${RB}") # available since VS 2017 15.8
-                endif()
-            endif()
-
-        elseif(OPTION STREQUAL "default-shared")
-            # don't export symbols from shared object libraries unless explicitly annotated
-            get_property(_ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
-            foreach(LANG IN ITEMS C CXX CUDA)
-                if("${LANG}" IN_LIST _ENABLED_LANGUAGES)
-                    set_target_properties(${TARGET_NAME} PROPERTIES ${LANG}_VISIBILITY_PRESET hidden)
-                endif()
-            endforeach()
-
-        elseif(OPTION STREQUAL "hidden-inline")
-            # don't export inline functions
-            set_target_properties(${TARGET_NAME} PROPERTIES VISIBILITY_INLINES_HIDDEN TRUE)
-
-        elseif(OPTION STREQUAL "pedantic" OR OPTION STREQUAL "diagnostics-pedantic")
-            # highest sensible level for warnings and diagnostics
-            if(MSVC)
-                # remove "/Wx" from CMAKE_CXX_FLAGS if present, as VC++ doesn't tolerate more than one "/Wx" flag
-                if(CMAKE_CXX_FLAGS MATCHES "/W[0-4]")
-                    string(REGEX REPLACE "/W[0-4]" " " CMAKE_CXX_FLAGS_NEW "${CMAKE_CXX_FLAGS}")
-                    cmakeshift_update_cache_variable_(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS_NEW}")
-                endif()
-                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/W4${RB}")
-            elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}-Wall${RB}" "${LB}-Wextra${RB}" "${LB}-pedantic${RB}")
-            endif()
-
-        elseif(OPTION STREQUAL "diagnostics-paranoid")
-            # enable extra paranoid warnings
-            if(MSVC)
-                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/w44062${RB}") # enumerator 'identifier' in a switch of enum 'enumeration' is not handled
-                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/w44242${RB}") # 'identifier': conversion from 'type1' to 'type2', possible loss of data
-                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/w44254${RB}") # 'operator': conversion from 'type1' to 'type2', possible loss of data
-                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/w44265${RB}") # 'class': class has virtual functions, but destructor is not virtual
-                #target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/w44365${RB}") # 'action': conversion from 'type_1' to 'type_2', signed/unsigned mismatch (cannot enable this one because it flags `container[signed_index]`)
-            endif()
-
-        elseif(OPTION STREQUAL "fatal-errors")
-            # every error is fatal; stop after reporting first error
-            if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}-fmax-errors=1${RB}")
-            elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}-ferror-limit=1${RB}")
-            endif()
-
-        elseif(OPTION STREQUAL "disable-annoying-warnings" OR OPTION STREQUAL "diagnostics-disable-annoying")
-            # disable annoying warnings
-            if(MSVC)
-                # C4324 (structure was padded due to alignment specifier)
-                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/wd4324${RB}")
-                # secure CRT warnings (e.g. "use sprintf_s rather than sprintf")
-                target_compile_definitions(${TARGET_NAME} ${SCOPE} "${LB}_CRT_SECURE_NO_WARNINGS${RB}")
-            elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}-Wno-unknown-pragmas${RB}")
-            endif()
-
-        elseif(OPTION STREQUAL "runtime-checks-stack")
-            if(MSVC)
-                # VC++ already enables stack frame run-time error checking and detection of uninitialized values by default in debug builds
-
-                # insert control flow guards
-                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/guard:cf${RB}")
-                target_link_libraries(${TARGET_NAME} ${SCOPE} "${LB}-guard:cf${RB}") # this flag also needs to be passed to the linker (CMake needs a leading '-' to recognize a flag here)
-            endif()
-
-            if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-                # enable stack protector
-                target_compile_options(${TARGET_NAME} PRIVATE "${LB}-fstack-protector${RB}")
-            endif()
-
-        elseif(OPTION STREQUAL "runtime-checks-asan")
-            # enable AddressSanitizer
-            if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-                target_compile_options(${TARGET_NAME} PRIVATE "${LB}-fsanitize=address${RB}")
-                target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=address${RB}")
-            endif()
-
-        elseif(OPTION STREQUAL "runtime-checks-ubsan")
-            # enable UndefinedBehaviorSanitizer
-            if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-                target_compile_options(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
-                target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
-
-            elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-                # UBSan can cause linker errors in Clang 6 and 7, and it raises issues in libc++ debugging code
-                if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
-                    message(WARNING "Not enabling UBSan for target \"${TARGET_NAME}\" because it can cause linker errors in Clang 6 and 7.")
-                    set(_SETTING_SET FALSE)
-                elseif("debug-stdlib" IN_LIST _CURRENT${_INTERFACE}_SETTINGS)
-                    message(WARNING "Not enabling UBSan for target \"${TARGET_NAME}\" because it is known to raise issues in libc++ debugging code.")
-                    set(_SETTING_SET FALSE)
-                else()
-                    target_compile_options(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
-                    target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
-                endif()
-            endif()
-
-        elseif(OPTION STREQUAL "debug-stdlib")
-            if(MSVC)
-                # enable checked iterators
-                target_compile_definitions(${TARGET_NAME} PRIVATE "${LB}$<$<NOT:$<CONFIG:Debug>>:_ITERATOR_DEBUG_LEVEL=1>${RB}")
-
-            elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-                # enable libstdc++ debug mode
-                target_compile_definitions(${TARGET_NAME} PRIVATE "${LB}$<$<CONFIG:Debug>:_GLIBCXX_DEBUG>${RB}")
-
-            elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
-                if("runtime-checks-ubsan" IN_LIST _CURRENT${_INTERFACE}_SETTINGS)
-                    message(WARNING "Not enabling standard library debug mode for target \"${TARGET}\" because it uses UBSan, which is known to raise issues in libc++ debugging code.")
-                    set(_SETTING_SET FALSE)
-                else()
-                    # enable libc++ debug mode
-                    target_compile_definitions(${TARGET_NAME} PRIVATE "${LB}$<IF:$<CONFIG:Debug>,_LIBCPP_DEBUG=1,_LIBCPP_DEBUG=0>${RB}")
-                endif()
-            endif()
+        if(NOT _SETTING_SET)
+            set(_SETTING_SET TRUE)
+            _cmakeshift_settings_other(${SETTING} "${VAL}" ${TARGET_NAME} ${SCOPE} "${LB}" "${RB}")
         endif()
 
         if(_SETTING_SET)
             if(CMAKESHIFT_TRACE_OUTPUT)
                 if(SCOPE STREQUAL INTERFACE)
-                    message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Applying interface setting \"${LB}${OPTION}${RB}\"")
+                    message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Applying interface setting \"${LB}${SETTING}${RB}\"")
                 else()
-                    message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Applying setting \"${LB}${OPTION}${RB}\"")
+                    message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Applying setting \"${LB}${SETTING}${RB}\"")
                 endif()
             endif()
-            list(APPEND _RAW${_INTERFACE}_SETTINGS "${OPTION}" PARENT_SCOPE)
-            list(APPEND _CURRENT${_INTERFACE}_SETTINGS "${LB}${OPTION}${RB}" PARENT_SCOPE)
+            list(APPEND _RAW${_INTERFACE}_SETTINGS "${SETTING}" PARENT_SCOPE)
+            list(APPEND _CURRENT${_INTERFACE}_SETTINGS "${LB}${SETTING}${RB}" PARENT_SCOPE)
         endif()
     endfunction()
 
@@ -495,8 +280,8 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
     # Apply global settings if this is the first call to `cmakeshift_target_compile_settings()` for this target.
     if(_TARGET_FIRST_TOUCH)
-        set(SCOPE_PRIVATE "${CMAKESHIFT_COMPILE_SETTINGS}" "${SCOPE_PRIVATE}")
-        set(SCOPE_INTERFACE "${CMAKESHIFT_INTERFACE_COMPILE_SETTINGS}" "${SCOPE_INTERFACE}")
+        set(SCOPE_PRIVATE "${CMAKESHIFT_PRIVATE_COMPILE_SETTINGS}" "${CMAKESHIFT_PUBLIC_COMPILE_SETTINGS}" "${SCOPE_PRIVATE}")
+        set(SCOPE_INTERFACE "${CMAKESHIFT_INTERFACE_COMPILE_SETTINGS}" "${CMAKESHIFT_PUBLIC_COMPILE_SETTINGS}" "${SCOPE_INTERFACE}")
     endif()
 
     foreach(arg IN LISTS SCOPE_PRIVATE SCOPE_PUBLIC)
