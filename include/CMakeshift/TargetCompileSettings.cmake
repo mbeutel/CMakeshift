@@ -44,8 +44,7 @@ define_property(TARGET
     FULL_DOCS "compile settings to be suppressed for target interface")
 
 
-set(CMAKESHIFT_TRACE_OUTPUT OFF CACHE BOOL "Enable trace output for CMakeshift routines")
-mark_as_advanced(CMAKESHIFT_TRACE_OUTPUT)
+include(CMakeshift/detail/Trace)
 
 set(CMAKESHIFT_COMPILE_SETTINGS "" CACHE STRING "Default compile settings applied to all targets with settings")
 set(CMAKESHIFT_INTERFACE_COMPILE_SETTINGS "" CACHE STRING "Default interface compile settings applied to all targets with settings")
