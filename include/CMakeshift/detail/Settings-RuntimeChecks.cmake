@@ -47,10 +47,10 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS SETTING VAL TARGET_NAME SCOPE LB RB
         elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             # UBSan can cause linker errors in Clang 6 and 7, and it raises issues in libc++ debugging code
             if(CMAKE_CXX_COMPILER_VERSION VERSION_LESS 8.0)
-                message(WARNING "Not enabling UBSan for target \"${TARGET_NAME}\" because it can cause linker errors in Clang 6 and 7.")
+                message(WARNING "cmakeshift_target_compile_settings(): Not enabling UBSan for target \"${TARGET_NAME}\" because it can cause linker errors in Clang 6 and 7.")
                 set(_SETTING_SET FALSE)
             elseif("debug-stdlib" IN_LIST _CURRENT${_INTERFACE}_SETTINGS)
-                message(WARNING "Not enabling UBSan for target \"${TARGET_NAME}\" because it is known to raise issues in libc++ debugging code.")
+                message(WARNING "cmakeshift_target_compile_settings(): Not enabling UBSan for target \"${TARGET_NAME}\" because it is known to raise issues in libc++ debugging code.")
                 set(_SETTING_SET FALSE)
             else()
                 target_compile_options(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
@@ -69,7 +69,7 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS SETTING VAL TARGET_NAME SCOPE LB RB
 
         elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             if("runtime-checks-ubsan" IN_LIST _CURRENT${_INTERFACE}_SETTINGS)
-                message(WARNING "Not enabling standard library debug mode for target \"${TARGET}\" because it uses UBSan, which is known to raise issues in libc++ debugging code.")
+                message(WARNING "cmakeshift_target_compile_settings(): Not enabling standard library debug mode for target \"${TARGET}\" because it uses UBSan, which is known to raise issues in libc++ debugging code.")
                 set(_SETTING_SET FALSE)
             else()
                 # enable libc++ debug mode

@@ -4,6 +4,11 @@
 # Author: Moritz Beutel
 
 
+if(DEFINED _CMAKESHIFT_KNOWN_SETTINGS)
+    return() # prevent multiple inclusion
+endif()
+
+
 define_property(TARGET
     PROPERTY CMAKESHIFT_COMPILE_SETTINGS
     BRIEF_DOCS "compile settings used for target"
@@ -43,6 +48,7 @@ set(_CMAKESHIFT_KNOWN_SETTINGS "")
 include(CMakeshift/detail/Settings-Default)
 include(CMakeshift/detail/Settings-Diagnostics)
 include(CMakeshift/detail/Settings-RuntimeChecks)
+include(CMakeshift/detail/Settings-Architecture)
 include(CMakeshift/detail/Settings-Other)
 
 
@@ -53,45 +59,65 @@ include(CMakeshift/detail/Settings-Other)
 #
 # Supported values for <OPT>:
 #
-#     default                           default options everyone can agree on:
-#         default-base                      uncontroversial settings
-#         default-output-directory          place executables and shared libraries in ${PROJECT_BINARY_DIR}
-#         default-utf8-source               source files use UTF-8 encoding
-#         default-windows-unicode           UNICODE and _UNICODE are defined on Windows
-#         default-triplet                   heed linking options of selected Vcpkg triplet
-#         default-conformance               conformant behavior
-#         default-debugjustmycode           debugging convenience: "just my code"
-#         default-shared                    export from shared objects is opt-in (via attribute or declspec)
-#   D hidden-inline                     do not export inline functions (non-conformant but usually sane) (deprecated; will either disappear or become part of "default")
-#     fatal-errors                      have the compiler stop at the first error
-#   D pedantic                          increase warning level (deprecated; use "diagnostics-pedantic" instead)
-#   D disable-annoying-warnings         suppress annoying warnings (e.g. unknown pragma, secure CRT, struct padding) (deprecated; use "diagnostics-disable-annoying" instead)
-#     diagnostics                       default diagnostic settings
-#         diagnostics-pedantic          increase warning level to pedantic level
-#         diagnostics-paranoid          increase warning level to paranoid level
-#         diagnostics-disable-annoying      suppress annoying warnings (e.g. unknown pragma, secure CRT, struct padding)
-#     runtime-checks                    enable runtime checks:
-#         runtime-checks-stack              enable stack guard
-#         runtime-checks-asan               enable address sanitizer
-#         runtime-checks-ubsan              enable UB sanitizer
-#     debug-stdlib                      enable debug mode of standard library
+#     default                                   default options everyone can agree on:
+#         default-base                              uncontroversial settings
+#         default-output-directory                  place executables and shared libraries in ${PROJECT_BINARY_DIR}
+#         default-utf8-source                       source files use UTF-8 encoding
+#         default-windows-unicode                   UNICODE and _UNICODE are defined on Windows
+#         default-triplet                           heed linking options of selected Vcpkg triplet
+#         default-conformance                       conformant behavior
+#         default-debugjustmycode                   debugging convenience: "just my code"
+#         default-shared                            export from shared objects is opt-in (via attribute or declspec)
+#   D hidden-inline                             do not export inline functions (non-conformant but usually sane) (deprecated; will either disappear or become part of "default")
+#     fatal-errors                              have the compiler stop at the first error
+#   D pedantic                                  increase warning level (deprecated; use "diagnostics-pedantic" instead)
+#   D disable-annoying-warnings                 suppress annoying warnings (e.g. unknown pragma, secure CRT, struct padding) (deprecated; use "diagnostics-disable-annoying" instead)
+#     diagnostics                               default diagnostic settings
+#         diagnostics-pedantic                  increase warning level to pedantic level
+#         diagnostics-paranoid                  increase warning level to paranoid level
+#         diagnostics-disable-annoying              suppress annoying warnings (e.g. unknown pragma, secure CRT, struct padding)
+#     runtime-checks                            enable runtime checks:
+#         runtime-checks-stack                      enable stack guard
+#         runtime-checks-asan                       enable address sanitizer
+#         runtime-checks-ubsan                      enable UB sanitizer
+#     debug-stdlib                              enable debug mode of standard library
+#     cpu-architecture=<arch>                   generate code for CPU architecture <arch>
+#     fp-model=<model>                          configure the floating-point model
 #
-#     Prefixing a sub-option with "no-" suppresses it when the summary option is used:
+# Supported arguments for "cpu-architecture" setting:
 #
-#         # enables all options in "default" except for "default-debugjustmycode"
-#         cmakeshift_target_compile_settings(foo
-#             PRIVATE
-#                 default no-default-debugjustmycode)
+#     default                   don't generate architecture-specific code
+#     penryn                    generate code for Intel Core 2 Refresh "Penryn"
+#     skylake                   generate code for Intel Core/Xeon "Skylake"
+#     skylake-server            generate code for Intel Core/Xeon "Skylake Server"
+#     skylake-server-avx512     generate code for Intel Core/Xeon "Skylake Server", prefer AVX-512 instructions
+#     knl                       generate code for Intel Xeon Phi "Knights Landing"
 #
-#     Settings prefixed with a 'D' are deprecated.
+# Supported arguments for "fp-model" setting:
 #
-#     Note that generator expressions are not supported for suppressed options.
+#     default       compiler default setting (equivalent to "precise" for most compilers, "fast" for ICC)
+#     strict        value safety, no contractions (e.g. fused multiply--add), precise FP exceptions
+#     consistent    value safety, no contractions (e.g. fused multiply--add)
+#     precise       value safety
+#     fast          permit optimizations affecting value safety
+#     fastest       permit aggressive optimizations affecting value safety
 #
-#     When using "debug-stdlib", note that this option may alter the object layout of containers.
-#     If your target exchanges container instantiations with other targets, those must also be
-#     compiled with "debug-stdlib", otherwise you may get silent data corruption at runtime.
+# Prefixing a sub-setting with "no-" suppresses it when the summary setting is used:
+# 
+#     # enables all options in "default" except for "default-debugjustmycode"
+#     cmakeshift_target_compile_settings(foo
+#         PRIVATE
+#             default no-default-debugjustmycode)
+# 
+# Settings prefixed with a 'D' are deprecated.
+# 
+# Note that generator expressions are not supported for suppressed options.
+# 
+# When using "debug-stdlib", note that this setting may alter the object layout of containers.
+# If your target exchanges container instantiations with other targets, those must also be
+# compiled with "debug-stdlib", otherwise you may get silent data corruption at runtime.
 #
-function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
+function(cmakeshift_target_compile_settings TARGET_NAME)
 
     function(CMAKESHIFT_UPDATE_CACHE_VARIABLE_ VAR_NAME VALUE)
         get_property(HELP_STRING CACHE ${VAR_NAME} PROPERTY HELPSTRING)
@@ -120,10 +146,10 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
     cmakeshift_get_target_property_(_SUPPRESSED_SETTINGS CMAKESHIFT_SUPPRESSED_COMPILE_SETTINGS)
     cmakeshift_get_target_property_(_SUPPRESSED_INTERFACE_SETTINGS CMAKESHIFT_SUPPRESSED_INTERFACE_COMPILE_SETTINGS)
     if(CMAKESHIFT_TRACE_OUTPUT)
-        message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Previously applied settings: \"${_CURRENT_SETTINGS}\"")
-        message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Previously applied interface settings: \"${_CURRENT_INTERFACE_SETTINGS}\"")
-        message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Previously suppressed settings: \"${_SUPPRESSED_SETTINGS}\"")
-        message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Previously suppressed interface settings \"${_SUPPRESSED_INTERFACE_SETTINGS}\"")
+        message("[cmakeshift_target_compile_settings()] Target ${TARGET_NAME}: Previously applied settings: \"${_CURRENT_SETTINGS}\"")
+        message("[cmakeshift_target_compile_settings()] Target ${TARGET_NAME}: Previously applied interface settings: \"${_CURRENT_INTERFACE_SETTINGS}\"")
+        message("[cmakeshift_target_compile_settings()] Target ${TARGET_NAME}: Previously suppressed settings: \"${_SUPPRESSED_SETTINGS}\"")
+        message("[cmakeshift_target_compile_settings()] Target ${TARGET_NAME}: Previously suppressed interface settings \"${_SUPPRESSED_INTERFACE_SETTINGS}\"")
     endif()
 
     set(_RAW_SETTINGS_0 "${_RAW_SETTINGS}")
@@ -136,11 +162,11 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             set(_INTERFACE "")
         endif()
 
-        if(NOT SETTING0 MATCHES "^[Nn][Oo]-([A-Za-z-]+)$")
+        if(NOT SETTING0 MATCHES "^[Nn][Oo]-([A-Za-z-]+)=?$")
             return()
         endif()
         set(SETTING1 "${CMAKE_MATCH_1}")
-        if(NOT SETTING1)
+        if(SETTING1 STREQUAL "")
             return()
         endif()
         string(TOLOWER "${SETTING1}" SETTING)
@@ -149,7 +175,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         if("${SETTING}" IN_LIST _CMAKESHIFT_KNOWN_CUMULATIVE_SETTINGS)
             # Recur and suppress all settings that match the stem.
             foreach(_SETTING IN LISTS _CMAKESHIFT_KNOWN_SETTINGS)
-                if(_SETTING MATCHES "^${SETTING}-[A-Za-z-]+$")
+                if(_SETTING MATCHES "^${SETTING}-[A-Za-z-]+=?$") # this includes settings with arguments, e.g. "cpu-architecture="
                     cmakeshift_target_compile_setting_accumulate_(${TARGET_NAME} ${SCOPE} "no-${_SETTING}")
                     set(_SUPPRESSED${_INTERFACE}_SETTINGS "${_SUPPRESSED${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
                 endif()
@@ -158,14 +184,14 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         endif()
 
         # Is the setting known?
-        if(NOT "${SETTING}" IN_LIST _CMAKESHIFT_KNOWN_SETTINGS)
-            message(SEND_ERROR "Unknown target option \"${SETTING}\", don't know what to do with option \"no-${SETTING}\"")
+        if(NOT "${SETTING}" IN_LIST _CMAKESHIFT_KNOWN_SETTINGS AND NOT "${SETTING}=" IN_LIST _CMAKESHIFT_KNOWN_SETTINGS)
+            message(SEND_ERROR "cmakeshift_target_compile_settings(): Unknown target setting \"${SETTING}\", don't know what to do with argument \"no-${SETTING}\"")
             return()
         endif()
 
         # Has it already been set in a previous call?
         if("${SETTING}" IN_LIST _RAW${_INTERFACE}_SETTINGS_0)
-            message(WARNING "Cannot suppress option \"${SETTING}\" because it was enabled in a previous call to cmakeshift_target_compile_settings().")
+            message(WARNING "cmakeshift_target_compile_settings(): Cannot suppress setting \"${SETTING}\" because it was enabled in a previous call to cmakeshift_target_compile_settings().")
             return()
         endif()
 
@@ -176,9 +202,9 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
         if(CMAKESHIFT_TRACE_OUTPUT)
             if(SCOPE STREQUAL INTERFACE)
-                message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Suppressing interface setting \"${SETTING}\"")
+                message("[cmakeshift_target_compile_settings()] Target ${TARGET_NAME}: Suppressing interface setting \"${SETTING}\"")
             else()
-                message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Suppressing setting \"${SETTING}\"")
+                message("[cmakeshift_target_compile_settings()] Target ${TARGET_NAME}: Suppressing setting \"${SETTING}\"")
             endif()
         endif()
         list(APPEND _SUPPRESSED${_INTERFACE}_SETTINGS "${SETTING}")
@@ -191,29 +217,37 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             set(_INTERFACE "")
         endif()
 
-        if(SETTING0 MATCHES "^\\$<(.+):([A-Za-z-]+)>$")
+        if(SETTING0 MATCHES "^\\$<(.+):([A-Za-z-]+(=.*)?)>$")
             set(LB "$<${CMAKE_MATCH_1}:")
-            set(RB ">")
             set(SETTING1 "${CMAKE_MATCH_2}")
+            set(RB ">")
         else()
             set(LB "")
-            set(RB "")
             set(SETTING1 "${SETTING0}")
+            set(RB "")
         endif()
 
-        if(NOT SETTING1)
+        if(SETTING1 MATCHES "^([A-Za-z-]+)(=)(.*)$")
+            set(SETTING2 "${CMAKE_MATCH_1}")
+            set(VAL_EQ "${CMAKE_MATCH_2}")
+            set(VAL "${CMAKE_MATCH_3}")
+        else()
+            set(SETTING2 "${SETTING1}")
+            set(VAL_EQ "")
+            set(VAL "")
+        endif()
+
+        if(SETTING2 STREQUAL "")
             return()
         endif()
-        string(TOLOWER "${SETTING1}" SETTING)
+        string(TOLOWER "${SETTING2}" SETTING)
 
         if(SETTING MATCHES "^no-[A-Za-z-]+$")
             if(NOT LB STREQUAL "")
-                message(SEND_ERROR "\"${SETTING0}\": Cannot use generator expression with suppressed options")
+                message(SEND_ERROR "cmakeshift_target_compile_settings(): \"${SETTING0}\": Cannot use generator expression with suppressed options")
             endif()
             return()
         endif()
-
-        set(VAL "")
 
         # Is it a cumulative setting?
         if("${SETTING}" IN_LIST _CMAKESHIFT_KNOWN_CUMULATIVE_SETTINGS)
@@ -229,13 +263,23 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
         endif()
 
         # Is the setting known?
-        if(NOT "${SETTING}" IN_LIST _CMAKESHIFT_KNOWN_SETTINGS)
-            message(SEND_ERROR "Unknown target option \"${SETTING}\"")
+        if(NOT "${SETTING}${VAL_EQ}" IN_LIST _CMAKESHIFT_KNOWN_SETTINGS)
+            if(VAL_EQ STREQUAL "=" AND "${SETTING}" IN_LIST _CMAKESHIFT_KNOWN_SETTINGS)
+                message(SEND_ERROR "cmakeshift_target_compile_settings(): Target setting \"${SETTING}\" cannot have value argument")
+            elseif((NOT VAL_EQ STREQUAL "=") AND "${SETTING}${VAL_EQ}" IN_LIST _CMAKESHIFT_KNOWN_SETTINGS)
+                message(SEND_ERROR "cmakeshift_target_compile_settings(): Target setting \"${SETTING}\" needs value argument (\"${SETTING}=<arg>\")")
+            else()
+                message(SEND_ERROR "cmakeshift_target_compile_settings(): Unknown target setting \"${SETTING}\"")
+            endif()
             return()
         endif()
 
         # Has it already been set or suppressed?
-        if("${SETTING}" IN_LIST _RAW${_INTERFACE}_SETTINGS OR "${SETTING}" IN_LIST _SUPPRESSED${_INTERFACE}_SETTINGS OR "${LB}${SETTING}${RB}" IN_LIST _CURRENT${_INTERFACE}_SETTINGS)
+        #if("${SETTING}" IN_LIST _RAW${_INTERFACE}_SETTINGS OR "${SETTING}" IN_LIST _SUPPRESSED${_INTERFACE}_SETTINGS OR "${LB}${SETTING}${VAL_EQ}${VAL}${RB}" IN_LIST _CURRENT${_INTERFACE}_SETTINGS)
+        if("${SETTING}" IN_LIST _SUPPRESSED${_INTERFACE}_SETTINGS OR "${LB}${SETTING}${VAL_EQ}${VAL}${RB}" IN_LIST _CURRENT${_INTERFACE}_SETTINGS)
+            #if(VAL_EQ STREQUAL "=")
+            #    message(WARNING "cmakeshift_target_compile_settings(): Setting \"${SETTING}\" has already been set before; new setting\"${SETTING}=${VAL}\" is ignored")
+            #endif()
             return()
         endif()
 
@@ -254,15 +298,20 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
         if(NOT _SETTING_SET)
             set(_SETTING_SET TRUE)
+            _cmakeshift_settings_architecture(${SETTING} "${VAL}" ${TARGET_NAME} ${SCOPE} "${LB}" "${RB}")
+        endif()
+
+        if(NOT _SETTING_SET)
+            set(_SETTING_SET TRUE)
             _cmakeshift_settings_other(${SETTING} "${VAL}" ${TARGET_NAME} ${SCOPE} "${LB}" "${RB}")
         endif()
 
         if(_SETTING_SET)
             if(CMAKESHIFT_TRACE_OUTPUT)
                 if(SCOPE STREQUAL INTERFACE)
-                    message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Applying interface setting \"${LB}${SETTING}${RB}\"")
+                    message("[cmakeshift_target_compile_settings()] Target ${TARGET_NAME}: Applying interface setting \"${LB}${SETTING}${RB}\"")
                 else()
-                    message("[CMAKESHIFT_TARGET_COMPILE_SETTINGS()] Target ${TARGET_NAME}: Applying setting \"${LB}${SETTING}${RB}\"")
+                    message("[cmakeshift_target_compile_settings()] Target ${TARGET_NAME}: Applying setting \"${LB}${SETTING}${RB}\"")
                 endif()
             endif()
             list(APPEND _RAW${_INTERFACE}_SETTINGS "${SETTING}" PARENT_SCOPE)
@@ -275,7 +324,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
     set(multiValueArgs PRIVATE INTERFACE PUBLIC)
     cmake_parse_arguments(PARSE_ARGV 1 "SCOPE" "${options}" "${oneValueArgs}" "${multiValueArgs}")
     if(SCOPE_UNPARSED_ARGUMENTS)
-        message(SEND_ERROR "Invalid argument keywords \"${SCOPE_UNPARSED_ARGUMENTS}\"; expected PRIVATE, INTERFACE, or PUBLIC")
+        message(SEND_ERROR "cmakeshift_target_compile_settings(): Invalid argument keywords \"${SCOPE_UNPARSED_ARGUMENTS}\"; expected PRIVATE, INTERFACE, or PUBLIC")
     endif()
 
     # Apply global settings if this is the first call to `cmakeshift_target_compile_settings()` for this target.
@@ -308,4 +357,3 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
             CMAKESHIFT_SUPPRESSED_INTERFACE_COMPILE_SETTINGS "${_SUPPRESSED_INTERFACE_SETTINGS}")
 
 endfunction()
-
