@@ -55,9 +55,10 @@ include(CMakeshift/detail/Settings-Other)
 # Set known compile options for the target. 
 #
 #     cmakeshift_target_compile_settings(<target>
-#         PRIVATE|PUBLIC|INTERFACE <OPT>...)
+#         PRIVATE|PUBLIC|INTERFACE <SETTING>...)
 #
-# Supported values for <OPT>:
+#
+# Supported values for <SETTING>:
 #
 #     default                                   default options everyone can agree on:
 #         default-base                              uncontroversial settings
@@ -68,21 +69,26 @@ include(CMakeshift/detail/Settings-Other)
 #         default-conformance                       conformant behavior
 #         default-debugjustmycode                   debugging convenience: "just my code"
 #         default-shared                            export from shared objects is opt-in (via attribute or declspec)
+# 
 #   D hidden-inline                             do not export inline functions (non-conformant but usually sane) (deprecated; will either disappear or become part of "default")
+#
+#     diagnostics                               default diagnostic settings
+#         diagnostics-pedantic                      increase warning level to pedantic level
+#         diagnostics-paranoid                      increase warning level to paranoid level
+#         diagnostics-disable-annoying              suppress annoying warnings (e.g. unknown pragma, secure CRT, struct padding)
 #     fatal-errors                              have the compiler stop at the first error
 #   D pedantic                                  increase warning level (deprecated; use "diagnostics-pedantic" instead)
 #   D disable-annoying-warnings                 suppress annoying warnings (e.g. unknown pragma, secure CRT, struct padding) (deprecated; use "diagnostics-disable-annoying" instead)
-#     diagnostics                               default diagnostic settings
-#         diagnostics-pedantic                  increase warning level to pedantic level
-#         diagnostics-paranoid                  increase warning level to paranoid level
-#         diagnostics-disable-annoying              suppress annoying warnings (e.g. unknown pragma, secure CRT, struct padding)
+#
 #     runtime-checks                            enable runtime checks:
 #         runtime-checks-stack                      enable stack guard
 #         runtime-checks-asan                       enable address sanitizer
 #         runtime-checks-ubsan                      enable UB sanitizer
 #     debug-stdlib                              enable debug mode of standard library
+# 
 #     cpu-architecture=<arch>                   generate code for CPU architecture <arch>
 #     fp-model=<model>                          configure the floating-point model
+#
 #
 # Supported arguments for "cpu-architecture" setting:
 #
@@ -113,11 +119,12 @@ include(CMakeshift/detail/Settings-Other)
 # 
 # Note that generator expressions are not supported for suppressed options.
 # 
-# When using "debug-stdlib", note that this setting may alter the object layout of containers.
-# If your target exchanges container instantiations with other targets, those must also be
-# compiled with "debug-stdlib", otherwise you may get silent data corruption at runtime.
+# When using "debug-stdlib", note that this setting may alter the object layout of STL containers.
+# If your target exchanges STL container objects with other targets, those must also be compiled
+# with "debug-stdlib", otherwise you may get silent data corruption at runtime. (This applies
+# mostly to GCC and Clang; mismatching debug settings cause link-time errors for Visual C++.)
 #
-function(cmakeshift_target_compile_settings TARGET_NAME)
+function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
     function(CMAKESHIFT_UPDATE_CACHE_VARIABLE_ VAR_NAME VALUE)
         get_property(HELP_STRING CACHE ${VAR_NAME} PROPERTY HELPSTRING)

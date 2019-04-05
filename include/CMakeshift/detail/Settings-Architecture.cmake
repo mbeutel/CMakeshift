@@ -7,8 +7,7 @@
 
 list(APPEND _CMAKESHIFT_KNOWN_SETTINGS
     "cpu-architecture="
-    "fp-model="
-    "fp-contract=")
+    "fp-model=")
 
 
 function(_CMAKESHIFT_SETTINGS_ARCHITECTURE SETTING VAL TARGET_NAME SCOPE LB RB)
