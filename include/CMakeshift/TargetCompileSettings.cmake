@@ -350,7 +350,11 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
     # Apply global settings if this is the first call to `cmakeshift_target_compile_settings()` for this target.
     if(_TARGET_FIRST_TOUCH)
-        set(SCOPE_PRIVATE "${CMAKESHIFT_PRIVATE_COMPILE_SETTINGS}" "${CMAKESHIFT_PUBLIC_COMPILE_SETTINGS}" "${SCOPE_PRIVATE}")
+        get_target_property(_TARGET_TYPE ${TARGET_NAME} TYPE)
+		# Interface library targets cannot have private settings; skip any global defaults.
+        if (NOT target_type STREQUAL INTERFACE_LIBRARY)
+            set(SCOPE_PRIVATE "${CMAKESHIFT_PRIVATE_COMPILE_SETTINGS}" "${CMAKESHIFT_PUBLIC_COMPILE_SETTINGS}" "${SCOPE_PRIVATE}")
+        endif()
         set(SCOPE_INTERFACE "${CMAKESHIFT_INTERFACE_COMPILE_SETTINGS}" "${CMAKESHIFT_PUBLIC_COMPILE_SETTINGS}" "${SCOPE_INTERFACE}")
     endif()
 
