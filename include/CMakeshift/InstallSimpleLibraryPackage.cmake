@@ -24,7 +24,7 @@ get_filename_component(CMAKESHIFT_SCRIPT_DIR "${CMAKE_CURRENT_LIST_DIR}" DIRECTO
 #
 # Arguments:
 #
-#     INTERFACE                     package is a header-only or script-only library (i.e. the exported build directory can be referenced regardless of the build configuration)
+#     INTERFACE                     package is a header-only or script-only library (i.e. `find_package()` finds the exported build directory regardless of build configuration or target platform)
 #     PROJECT <project-name>        specifies the project name; ${PROJECT_NAME} is used if not specified
 #     NAMESPACE <namespace>         specifies the namespace prefix to use for exported targets; the project name is used if not specified
 #     EXPORT <export>               names the export to install
