@@ -4,11 +4,12 @@
 # Author: Moritz Beutel
 
 
-message(DEPRECATION "CMakeshift/TargetArchitecture is deprecated; instead use cmakeshift_target_compile_settings() with the \"cpu-architecture=<arch>\" setting.")
+# This variable is no longer defined to avoid exposing it in cache editors, but it is still respected by cmakeshift_target_architecture().
+#set(TARGET_ARCHITECTURE "Default" CACHE STRING "Set target architecture (default, penryn, skylake, skylake-server, skylake-server-avx512, knl)")
 
 
 # Define build options.
-set(TARGET_ARCHITECTURE "Default" CACHE STRING "Set target architecture (default, penryn, skylake, skylake-server, skylake-server-avx512, knl)")
+set(CPU_TARGET_ARCHITECTURE "" CACHE STRING "Set CPU target architecture (default, penryn, skylake, skylake-server, skylake-server-avx512, knl)")
 
 
 include(CMakeshift/TargetCompileSettings)
