@@ -11,7 +11,7 @@
 #
 # This will define the following variables::
 #
-#   MS-GSL_FOUND                - True if the Microsoft GSL was found
+#   MS-GSL_FOUND   - True if the Microsoft GSL was found
 #
 # and the following imported targets::
 #
