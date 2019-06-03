@@ -114,6 +114,25 @@ function(_CMAKESHIFT_SETTINGS_ARCHITECTURE)
 
         if(NOT MODEL STREQUAL "" AND NOT MODEL STREQUAL "default")
 
+			if(HAVE_CUDA)
+				if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
+					if(MODEL STREQUAL "strict" OR MODEL STREQUAL "consistent")
+						target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--fmad=false>${RB}") # do not fuse multiplications and additions
+					elseif(MODEL STREQUAL "precise")
+						# default behavior; nothing to do
+					elseif(MODEL STREQUAL "fast")
+						target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--ftz=true>${RB}" "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--prec-div=false${RB}" "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--prec-sqrt=false>${RB}")
+					elseif(MODEL STREQUAL "fastest")
+						target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--use_fast_math>${RB}") # implies everything in "fast" above
+					else()
+						set(_SETTING_SET FALSE PARENT_SCOPE)
+					endif()
+					
+				else()
+					message(FATAL_ERROR "cmakeshift_target_compile_settings(): Unknown CUDA compiler: CMAKE_CUDA_COMPILER_ID=${CMAKE_CUDA_COMPILER_ID}")
+				endif()
+			endif()
+
             if(MSVC)
                 if(MODEL STREQUAL "strict" OR MODEL STREQUAL "consistent")
                     target_compile_options(${TARGET_NAME} ${SCOPE} ${PASSTHROUGH} "${LB}/fp:strict${RB}")
