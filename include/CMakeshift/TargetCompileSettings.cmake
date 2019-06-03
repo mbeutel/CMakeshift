@@ -75,10 +75,10 @@ include(CMakeshift/detail/Settings-Other)
 #     diagnostics                               default diagnostic settings
 #         diagnostics-pedantic                      increase warning level to pedantic level
 #         diagnostics-paranoid                      increase warning level to paranoid level
-#         diagnostics-disable-annoying              suppress annoying warnings (e.g. unknown pragma, secure CRT, struct padding)
+#         diagnostics-disable-annoying              suppress annoying warnings (e.g. secure CRT, struct padding)
 #     fatal-errors                              have the compiler stop at the first error
 #   D pedantic                                  increase warning level (deprecated; use "diagnostics-pedantic" instead)
-#   D disable-annoying-warnings                 suppress annoying warnings (e.g. unknown pragma, secure CRT, struct padding) (deprecated; use "diagnostics-disable-annoying" instead)
+#   D disable-annoying-warnings                 suppress annoying warnings (e.g. secure CRT, struct padding) (deprecated; use "diagnostics-disable-annoying" instead)
 #
 #     runtime-checks                            enable runtime checks:
 #         runtime-checks-stack                      enable stack guard

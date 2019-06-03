@@ -66,8 +66,6 @@ function(_CMAKESHIFT_SETTINGS_DIAGNOSTICS SETTING VAL TARGET_NAME SCOPE LB RB)
             target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}/wd4324${RB}")
             # secure CRT warnings (e.g. "use sprintf_s rather than sprintf")
             target_compile_definitions(${TARGET_NAME} ${SCOPE} "${LB}_CRT_SECURE_NO_WARNINGS${RB}")
-        elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-            target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}-Wno-unknown-pragmas${RB}")
         endif()
 
     else()
