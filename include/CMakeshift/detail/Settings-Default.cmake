@@ -16,6 +16,7 @@ list(APPEND _CMAKESHIFT_KNOWN_SETTINGS
     "default-triplet"
     "default-conformance"
     "default-debugjustmycode"
+    "default-debugdevicecode"
     "default-shared"
     "default-inlines-hidden")
 
@@ -132,6 +133,17 @@ function(_CMAKESHIFT_SETTINGS_DEFAULT)
             if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.15)
                 target_compile_options(${TARGET_NAME} ${SCOPE} ${PASSTHROUGH} "${LB}$<$<CONFIG:Debug>:/JMC>${RB}") # available since VS 2017 15.8
             endif()
+        endif()
+
+    elseif(SETTING STREQUAL "default-debugdevicecode")
+        # enable device code debugging
+        if(HAVE_CUDA)
+			if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
+				target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:$<$<CONFIG:Debug>:-G>>${RB}" "${LB}$<$<COMPILE_LANGUAGE:CUDA>:$<$<CONFIG:RelWithDebInfo>:--generate-line-info>>${RB}")
+				target_compile_definitions(${TARGET_NAME} ${SCOPE} "${LB}$<$<NOT:$<CONFIG:Debug>>:NDEBUG>${RB}")
+			else()
+				message(FATAL_ERROR "cmakeshift_target_compile_settings(): Unknown CUDA compiler: CMAKE_CUDA_COMPILER_ID=${CMAKE_CUDA_COMPILER_ID}")
+			endif()
         endif()
 
     elseif(SETTING STREQUAL "default-shared")
