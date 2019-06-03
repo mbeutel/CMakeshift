@@ -7,7 +7,9 @@
 
 list(APPEND _CMAKESHIFT_KNOWN_SETTINGS
     "cpu-architecture="
-    "fp-model=")
+    "fp-model="
+    "cuda-architecture="
+    "cuda-gpu-code=")
 
 
 function(_CMAKESHIFT_SETTINGS_ARCHITECTURE)
@@ -187,6 +189,30 @@ function(_CMAKESHIFT_SETTINGS_ARCHITECTURE)
             endif()
 
         endif()
+        
+    elseif(SETTING STREQUAL "cuda-architecture")
+
+        string(TOLOWER "${VAL}" ARCH)
+
+        if(HAVE_CUDA AND NOT ARCH STREQUAL "" AND NOT ARCH STREQUAL "default")
+			if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
+				target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--gpu-architecture=${ARCH}>${RB}")
+			else()
+				message(FATAL_ERROR "cmakeshift_target_compile_settings(): Unknown CUDA compiler: CMAKE_CUDA_COMPILER_ID=${CMAKE_CUDA_COMPILER_ID}")
+			endif()
+		endif()
+        
+    elseif(SETTING STREQUAL "cuda-gpu-code")
+
+        string(TOLOWER "${VAL}" GPUCODE)
+
+        if(HAVE_CUDA AND NOT GPUCODE STREQUAL "" AND NOT GPUCODE STREQUAL "default")
+			if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
+				target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--gpu-code=${GPUCODE}>${RB}")
+			else()
+				message(FATAL_ERROR "cmakeshift_target_compile_settings(): Unknown CUDA compiler: CMAKE_CUDA_COMPILER_ID=${CMAKE_CUDA_COMPILER_ID}")
+			endif()
+		endif()
 
     else()
         set(_SETTING_SET FALSE PARENT_SCOPE)

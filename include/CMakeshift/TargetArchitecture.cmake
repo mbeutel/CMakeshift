@@ -11,6 +11,12 @@
 # Define build options.
 set(CPU_TARGET_ARCHITECTURE "" CACHE STRING "Set CPU target architecture (default, penryn, skylake, skylake-server, skylake-server-avx512, knl)")
 
+get_property(_CMAKESHIFT_ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
+if(CUDA IN_LIST _CMAKESHIFT_ENABLED_LANGUAGES)
+    set(CUDA_TARGET_ARCHITECTURE "" CACHE STRING "Set CUDA target architecture (e.g. sm_61, compute_61)")
+    set(CUDA_GPU_CODE "" CACHE STRING "Set CUDA GPU code to generate (e.g. sm_61)")
+endif()
+
 
 include(CMakeshift/TargetCompileSettings)
 
