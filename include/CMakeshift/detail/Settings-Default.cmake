@@ -16,7 +16,8 @@ list(APPEND _CMAKESHIFT_KNOWN_SETTINGS
     "default-triplet"
     "default-conformance"
     "default-debugjustmycode"
-    "default-shared")
+    "default-shared"
+    "default-inlines-hidden")
 
 
 if(_VCPKG_ROOT_DIR AND VCPKG_TARGET_TRIPLET)
@@ -131,6 +132,10 @@ function(_CMAKESHIFT_SETTINGS_DEFAULT SETTING VAL TARGET_NAME SCOPE LB RB)
                 set_target_properties(${TARGET_NAME} PROPERTIES ${LANG}_VISIBILITY_PRESET hidden)
             endif()
         endforeach()
+
+    elseif(SETTING STREQUAL "default-inlines-hidden")
+        # don't export inline functions
+        set_target_properties(${TARGET_NAME} PROPERTIES VISIBILITY_INLINES_HIDDEN TRUE)
 
     else()
         set(_SETTING_SET FALSE PARENT_SCOPE)

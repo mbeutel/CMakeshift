@@ -69,8 +69,9 @@ include(CMakeshift/detail/Settings-Other)
 #         default-conformance                       conformant behavior
 #         default-debugjustmycode                   debugging convenience: "just my code"
 #         default-shared                            export from shared objects is opt-in (via attribute or declspec)
+#         default-inlines-hidden                    do not export inline functions (non-conformant but usually sane, and may speed up build)
 # 
-#   D hidden-inline                             do not export inline functions (non-conformant but usually sane) (deprecated; will either disappear or become part of "default")
+#   D hidden-inline                             do not export inline functions (non-conformant but usually sane, and may speed up build) (deprecated; use "default-inlines-hidden" instead)
 #
 #     diagnostics                               default diagnostic settings
 #         diagnostics-pedantic                      increase warning level to pedantic level
