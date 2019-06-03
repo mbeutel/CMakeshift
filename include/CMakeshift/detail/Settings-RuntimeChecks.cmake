@@ -24,20 +24,20 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
             # VC++ already enables stack frame run-time error checking and detection of uninitialized values by default in debug builds
 
             # insert control flow guards
-            target_compile_options(${TARGET_NAME} ${SCOPE} ${PASSTHROUGH} "${LB}/guard:cf${RB}")
+            target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/guard:cf${RB}")
             # TODO: use target_link_options() from CMake 3.13; test for NVCC interference
             target_link_libraries(${TARGET_NAME} ${SCOPE} "${LB}-guard:cf${RB}") # this flag also needs to be passed to the linker (CMake needs a leading '-' to recognize a flag here)
         endif()
 
         if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
             # enable stack protector
-            target_compile_options(${TARGET_NAME} PRIVATE ${PASSTHROUGH} "${LB}-fstack-protector${RB}")
+            target_compile_options(${TARGET_NAME} PRIVATE "${LB}${PASSTHROUGH}-fstack-protector${RB}")
         endif()
 
     elseif(OPTION STREQUAL "runtime-checks-asan")
         # enable AddressSanitizer
         if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
-            target_compile_options(${TARGET_NAME} PRIVATE ${PASSTHROUGH} "${LB}-fsanitize=address${RB}")
+            target_compile_options(${TARGET_NAME} PRIVATE "${LB}${PASSTHROUGH}-fsanitize=address${RB}")
             # TODO: use target_link_options() from CMake 3.13; test for NVCC interference
             target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=address${RB}")
         endif()
@@ -45,7 +45,7 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
     elseif(OPTION STREQUAL "runtime-checks-ubsan")
         # enable UndefinedBehaviorSanitizer
         if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
-            target_compile_options(${TARGET_NAME} PRIVATE ${PASSTHROUGH} "${LB}-fsanitize=undefined${RB}")
+            target_compile_options(${TARGET_NAME} PRIVATE "${LB}${PASSTHROUGH}-fsanitize=undefined${RB}")
             # TODO: use target_link_options() from CMake 3.13; test for NVCC interference
             target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
 
@@ -58,7 +58,7 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
                 message(WARNING "cmakeshift_target_compile_settings(): Not enabling UBSan for target \"${TARGET_NAME}\" because it is known to raise issues in libc++ debugging code.")
                 set(_SETTING_SET FALSE)
             else()
-                target_compile_options(${TARGET_NAME} PRIVATE ${PASSTHROUGH} "${LB}-fsanitize=undefined${RB}")
+                target_compile_options(${TARGET_NAME} PRIVATE "${LB}${PASSTHROUGH}-fsanitize=undefined${RB}")
 				# TODO: use target_link_options() from CMake 3.13; test for NVCC interference
                 target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
             endif()

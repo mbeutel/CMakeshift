@@ -184,7 +184,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
     if(CUDA IN_LIST _ENABLED_LANGUAGES)
         set(HAVE_CUDA TRUE)
         if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
-            set(PASSTHROUGH "${LB}$<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler>${RB}")
+            set(PASSTHROUGH "$<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=>")
 		else()
 			message(FATAL_ERROR "cmakeshift_target_compile_settings(): Unknown CUDA compiler: CMAKE_CUDA_COMPILER_ID=${CMAKE_CUDA_COMPILER_ID}")
         endif()
@@ -364,6 +364,28 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS TARGET_NAME)
 
     # Apply global settings if this is the first call to `cmakeshift_target_compile_settings()` for this target.
     if(_TARGET_FIRST_TOUCH)
+        # TODO: is this necessary? how about the default CUDA flags?
+
+        if(HAVE_CUDA AND CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA") # NVCC
+            # pass through global CXX flags to the host compiler
+            foreach(CFG IN ITEMS "" Debug Release MinSizeRel RelWithDebInfo)
+                string(TOUPPER "${CFG}" CFG_UPPER)
+                set(CFG_COND "")
+                if(NOT CFG STREQUAL "")
+                    set(CFG_UPPER "_${CFG_UPPER}")
+                    set(CFG_COND ",$<CONFIG:${CFG}>")
+                endif()
+                if(NOT "${CMAKE_CXX_FLAGS${CFG_UPPER}}" STREQUAL "")
+                    target_compile_options(${TARGET_NAME} PRIVATE "$<$<AND:$<COMPILE_LANGUAGE:CUDA>${CFG_COND}>:-Xcompiler=${CMAKE_CXX_FLAGS${CFG_UPPER}}>")
+                endif()
+                #separate_arguments(FLAGS_LIST NATIVE_COMMAND ${CMAKE_CXX_FLAGS${CFG_UPPER}})
+                #foreach(FLAG IN LISTS FLAGS_LIST)
+                #    message("target_compile_options(${TARGET_NAME} ${SCOPE} $<$<AND:$<COMPILE_LANGUAGE:CUDA>${CFG_COND}>:-Xcompiler=${FLAG}>")
+                #    target_compile_options(${TARGET_NAME} PRIVATE "$<$<AND:$<COMPILE_LANGUAGE:CUDA>${CFG_COND}>:-Xcompiler=${FLAG}>")
+                #endforeach()
+            endforeach()
+        endif()
+
         get_target_property(_TARGET_TYPE ${TARGET_NAME} TYPE)
 		# Interface library targets cannot have private settings; skip any global defaults.
         if (NOT target_type STREQUAL INTERFACE_LIBRARY)

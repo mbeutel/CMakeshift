@@ -43,10 +43,10 @@ function(_CMAKESHIFT_SETTINGS_DEFAULT)
         # default options everyone can agree on
         if(MSVC)
             # enable /bigobj switch to permit more than 2^16 COMDAT sections per .obj file (can be useful in heavily templatized code)
-            target_compile_options(${TARGET_NAME} ${SCOPE} ${PASSTHROUGH} "${LB}/bigobj${RB}")
+            target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/bigobj${RB}")
 
             # remove unreferenced COMDATs to improve linker throughput
-            target_compile_options(${TARGET_NAME} ${SCOPE} ${PASSTHROUGH} "${LB}/Zc:inline${RB}") # available since pre-modern VS 2013 Update 2
+            target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/Zc:inline${RB}") # available since pre-modern VS 2013 Update 2
         endif()
 
         if(HAVE_CUDA AND CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA") # NVCC
@@ -67,7 +67,7 @@ function(_CMAKESHIFT_SETTINGS_DEFAULT)
     elseif(SETTING STREQUAL "default-utf8-source")
         # source files use UTF-8 encoding
         if(MSVC)
-            target_compile_options(${TARGET_NAME} ${SCOPE} ${PASSTHROUGH} "${LB}/utf-8${RB}")
+            target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/utf-8${RB}")
         endif()
 
     elseif(SETTING STREQUAL "default-windows-unicode")
@@ -108,21 +108,21 @@ function(_CMAKESHIFT_SETTINGS_DEFAULT)
 
         if(MSVC)
             # make `volatile` behave as specified by the language standard, as opposed to the quasi-atomic semantics VC++ implements by default
-            target_compile_options(${TARGET_NAME} ${SCOPE} ${PASSTHROUGH} "${LB}/volatile:iso${RB}")
+            target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/volatile:iso${RB}")
 
             # enable permissive mode (prefer already rejuvenated parts of compiler for better conformance)
             if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.10)
-                target_compile_options(${TARGET_NAME} ${SCOPE} ${PASSTHROUGH} "${LB}/permissive-${RB}") # available since VS 2017 15.0
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/permissive-${RB}") # available since VS 2017 15.0
             endif()
 
             # enable "extern constexpr" support
             if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.13)
-                target_compile_options(${TARGET_NAME} ${SCOPE} ${PASSTHROUGH} "${LB}/Zc:externConstexpr${RB}") # available since VS 2017 15.6
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/Zc:externConstexpr${RB}") # available since VS 2017 15.6
             endif()
 
             # enable updated __cplusplus macro value
             if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.14)
-                target_compile_options(${TARGET_NAME} ${SCOPE} ${PASSTHROUGH} "${LB}/Zc:__cplusplus${RB}") # available since VS 2017 15.7
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/Zc:__cplusplus${RB}") # available since VS 2017 15.7
             endif()
         endif()
 
@@ -131,7 +131,7 @@ function(_CMAKESHIFT_SETTINGS_DEFAULT)
         if(MSVC)
             # enable Just My Code for debugging convenience
             if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.15)
-                target_compile_options(${TARGET_NAME} ${SCOPE} ${PASSTHROUGH} "${LB}$<$<CONFIG:Debug>:/JMC>${RB}") # available since VS 2017 15.8
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<CONFIG:Debug>:${PASSTHROUGH}/JMC>${RB}") # available since VS 2017 15.8
             endif()
         endif()
 
