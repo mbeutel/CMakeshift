@@ -68,6 +68,7 @@ include(CMakeshift/detail/Settings-Other)
 #         default-triplet                           heed linking options of selected Vcpkg triplet
 #         default-conformance                       conformant behavior
 #         default-debugjustmycode                   debugging convenience: "just my code"
+#         default-debugdevicecode                   generate debug information for CUDA device code; disables optimizations in device code
 #         default-shared                            export from shared objects is opt-in (via attribute or declspec)
 #         default-inlines-hidden                    do not export inline functions (non-conformant but usually sane, and may speed up build)
 # 
@@ -87,8 +88,10 @@ include(CMakeshift/detail/Settings-Other)
 #         runtime-checks-ubsan                      enable UB sanitizer
 #     debug-stdlib                              enable debug mode of standard library
 # 
-#     cpu-architecture=<arch>                   generate code for CPU architecture <arch>
+#     cpu-architecture=<arch>                   generate code for the given CPU architecture
 #     fp-model=<model>                          configure the floating-point model
+#     cuda-architecture=<arch>                  specify virtual or real CUDA architecture
+#     cuda-gpu-code=<arch>                      specify real CUDA architecture
 #
 #
 # Supported arguments for "cpu-architecture" setting:
@@ -97,8 +100,19 @@ include(CMakeshift/detail/Settings-Other)
 #     penryn                    generate code for Intel Core 2 Refresh "Penryn"
 #     skylake                   generate code for Intel Core/Xeon "Skylake"
 #     skylake-server            generate code for Intel Core/Xeon "Skylake Server"
-#     skylake-server-avx512     generate code for Intel Core/Xeon "Skylake Server", prefer AVX-512 instructions
+#     skylake-server-avx512     generate code for Intel Core/Xeon "Skylake Server", prefer AVX-512 instructions (adds compile definition PREFER_AVX512=1)
 #     knl                       generate code for Intel Xeon Phi "Knights Landing"
+#
+# For architectures which support fused multiply--add opcodes, the compile definition HAVE_FUSED_MULTIPLY_ADD=1 is added.
+#
+# A project-wide default for the "cpu-architecture" setting can be set with the build option "CPU_ARCHITECTURE".
+#
+#
+# The arguments for the "cuda-architecture" and "cuda-gpu-code" settings are simply passed through to the CUDA compiler. For a list of admissible values, please
+# refer to NVIDIA's NVCC documentation:
+#
+#     https://docs.nvidia.com/cuda/cuda-compiler-driver-nvcc/index.html
+#
 #
 # Supported arguments for "fp-model" setting:
 #
