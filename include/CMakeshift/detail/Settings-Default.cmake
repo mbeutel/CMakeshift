@@ -48,6 +48,14 @@ function(_CMAKESHIFT_SETTINGS_DEFAULT)
             target_compile_options(${TARGET_NAME} ${SCOPE} ${PASSTHROUGH} "${LB}/Zc:inline${RB}") # available since pre-modern VS 2013 Update 2
         endif()
 
+        if(HAVE_CUDA AND CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA") # NVCC
+            # permit cross-domain calls during constexpr evaluation
+            target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--expt-relaxed-constexpr>${RB}")
+
+            # permit `__host__ __device__` annotation for lambda functions
+            target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--expt-extended-lambda>${RB}")
+        endif()
+
     elseif(SETTING STREQUAL "default-output-directory")
         # place binaries in ${PROJECT_BINARY_DIR}
         get_target_property(_TARGET_TYPE ${TARGET_NAME} TYPE)
