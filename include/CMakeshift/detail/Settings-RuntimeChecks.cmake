@@ -25,7 +25,6 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
 
             # insert control flow guards
             target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/guard:cf${RB}")
-            # TODO: use target_link_options() from CMake 3.13; test for NVCC interference
             target_link_libraries(${TARGET_NAME} ${SCOPE} "${LB}-guard:cf${RB}") # this flag also needs to be passed to the linker (CMake needs a leading '-' to recognize a flag here)
         endif()
 
@@ -38,15 +37,22 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
         # enable AddressSanitizer
         if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
             target_compile_options(${TARGET_NAME} PRIVATE "${LB}${PASSTHROUGH}-fsanitize=address${RB}")
-            # TODO: use target_link_options() from CMake 3.13; test for NVCC interference
             target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=address${RB}")
+            
+            if(HAVE_CUDA AND CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
+                get_target_property(_TARGET_TYPE ${TARGET_NAME} TYPE)
+                if (NOT target_type STREQUAL INTERFACE_LIBRARY)
+                    # CUDA/NVCC has known incompatibilities with AddressSanitizer. We work around by setting "ASAN_OPTIONS=protect_shadow_gap=0" by providing a weakly
+                    # linked `__asan_default_options()` function for any non-interface target.
+                    target_sources(${TARGET_NAME} "${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/CMakeshift_AddressSanitizer_CUDA_workaround.c")
+                endif()
+            endif()
         endif()
 
     elseif(SETTING STREQUAL "runtime-checks-ubsan")
         # enable UndefinedBehaviorSanitizer
         if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
             target_compile_options(${TARGET_NAME} PRIVATE "${LB}${PASSTHROUGH}-fsanitize=undefined${RB}")
-            # TODO: use target_link_options() from CMake 3.13; test for NVCC interference
             target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
 
         elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
@@ -59,7 +65,6 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
                 set(_SETTING_SET FALSE)
             else()
                 target_compile_options(${TARGET_NAME} PRIVATE "${LB}${PASSTHROUGH}-fsanitize=undefined${RB}")
-				# TODO: use target_link_options() from CMake 3.13; test for NVCC interference
                 target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
             endif()
         endif()
