@@ -127,7 +127,7 @@ function(CMAKESHIFT_INSTALL_SIMPLE_LIBRARY_PACKAGE)
         else()
             set(_GENERATOR_IS_MULTI_CONFIG FALSE) # to work around surprising behavior of evaluating empty conditions
         endif()
-        configure_file("${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/templates/ConfigVersion-BuildType.cmake.in"
+        configure_file("${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/templates/ConfigVersion-BuildType.cmake.in"
             "${SCOPE_PROJECT_BINARY_DIR}/${SCOPE_PROJECT}ConfigVersion.cmake" @ONLY)
         
         # Configure a *Config.cmake file for the export of the build directory from the template, reflecting the

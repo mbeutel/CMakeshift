@@ -37,7 +37,7 @@ endif()
 
 function(_CMAKESHIFT_SETTINGS_DEFAULT)
 
-	# variables available from calling scope: SETTING, HAVE_CUDA, PASSTHROUGH, VAL, TARGET_NAME, SCOPE, LB, RB
+    # variables available from calling scope: SETTING, HAVE_CUDA, PASSTHROUGH, VAL, TARGET_NAME, SCOPE, LB, RB
 
     if(SETTING STREQUAL "default-base")
         # default options everyone can agree on
@@ -146,11 +146,11 @@ function(_CMAKESHIFT_SETTINGS_DEFAULT)
     elseif(SETTING STREQUAL "default-debugdevicecode")
         # enable device code debugging
         if(HAVE_CUDA)
-			if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
-				target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:$<$<CONFIG:Debug>:--device-debug>>${RB}" "${LB}$<$<COMPILE_LANGUAGE:CUDA>:$<$<CONFIG:RelWithDebInfo>:--generate-line-info>>${RB}")
-			else()
-				message(FATAL_ERROR "cmakeshift_target_compile_settings(): Unknown CUDA compiler: CMAKE_CUDA_COMPILER_ID=${CMAKE_CUDA_COMPILER_ID}")
-			endif()
+            if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:$<$<CONFIG:Debug>:--device-debug>>${RB}" "${LB}$<$<COMPILE_LANGUAGE:CUDA>:$<$<CONFIG:RelWithDebInfo>:--generate-line-info>>${RB}")
+            else()
+                message(FATAL_ERROR "cmakeshift_target_compile_settings(): Unknown CUDA compiler: CMAKE_CUDA_COMPILER_ID=${CMAKE_CUDA_COMPILER_ID}")
+            endif()
         endif()
 
     elseif(SETTING STREQUAL "default-shared")

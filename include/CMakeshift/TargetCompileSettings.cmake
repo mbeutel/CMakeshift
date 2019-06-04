@@ -55,7 +55,7 @@ include(CMakeshift/detail/Settings-Other)
 # Set known compile options for the target. 
 #
 #     cmakeshift_target_compile_settings(
-#	      <TARGET>|TARGETS <TARGET>...
+#          <TARGET>|TARGETS <TARGET>...
 #         PRIVATE|PUBLIC|INTERFACE <SETTING>...)
 #
 #
@@ -328,117 +328,117 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS)
         endif()
     endfunction()
 
-	function(CMAKESHIFT_TARGET_COMPILE_SETTINGS_IMPL TARGET_NAME)
-	
-		set(_TARGET_FIRST_TOUCH FALSE)
+    function(CMAKESHIFT_TARGET_COMPILE_SETTINGS_IMPL TARGET_NAME)
+    
+        set(_TARGET_FIRST_TOUCH FALSE)
 
-		get_target_property(_CURRENT_SETTINGS ${TARGET_NAME} CMAKESHIFT_COMPILE_SETTINGS)
-		if(NOT _CURRENT_SETTINGS)
-			set(_TARGET_FIRST_TOUCH TRUE) # no settings have been set on the target before; remember this so we can apply global settings
-			set(_CURRENT_SETTINGS "") # set to "NOTFOUND" if target property doesn't exist
-		endif()
-		cmakeshift_get_target_property_(_CURRENT_INTERFACE_SETTINGS CMAKESHIFT_INTERFACE_COMPILE_SETTINGS)
-		cmakeshift_get_target_property_(_RAW_SETTINGS CMAKESHIFT_RAW_COMPILE_SETTINGS)
-		cmakeshift_get_target_property_(_RAW_INTERFACE_SETTINGS CMAKESHIFT_INTERFACE_RAW_COMPILE_SETTINGS)
-		cmakeshift_get_target_property_(_SUPPRESSED_SETTINGS CMAKESHIFT_SUPPRESSED_COMPILE_SETTINGS)
-		cmakeshift_get_target_property_(_SUPPRESSED_INTERFACE_SETTINGS CMAKESHIFT_SUPPRESSED_INTERFACE_COMPILE_SETTINGS)
-		if(CMAKESHIFT_TRACE_OUTPUT)
-			message("[cmakeshift_target_compile_settings()] Target ${TARGET_NAME}: Previously applied settings: \"${_CURRENT_SETTINGS}\"")
-			message("[cmakeshift_target_compile_settings()] Target ${TARGET_NAME}: Previously applied interface settings: \"${_CURRENT_INTERFACE_SETTINGS}\"")
-			message("[cmakeshift_target_compile_settings()] Target ${TARGET_NAME}: Previously suppressed settings: \"${_SUPPRESSED_SETTINGS}\"")
-			message("[cmakeshift_target_compile_settings()] Target ${TARGET_NAME}: Previously suppressed interface settings \"${_SUPPRESSED_INTERFACE_SETTINGS}\"")
-		endif()
+        get_target_property(_CURRENT_SETTINGS ${TARGET_NAME} CMAKESHIFT_COMPILE_SETTINGS)
+        if(NOT _CURRENT_SETTINGS)
+            set(_TARGET_FIRST_TOUCH TRUE) # no settings have been set on the target before; remember this so we can apply global settings
+            set(_CURRENT_SETTINGS "") # set to "NOTFOUND" if target property doesn't exist
+        endif()
+        cmakeshift_get_target_property_(_CURRENT_INTERFACE_SETTINGS CMAKESHIFT_INTERFACE_COMPILE_SETTINGS)
+        cmakeshift_get_target_property_(_RAW_SETTINGS CMAKESHIFT_RAW_COMPILE_SETTINGS)
+        cmakeshift_get_target_property_(_RAW_INTERFACE_SETTINGS CMAKESHIFT_INTERFACE_RAW_COMPILE_SETTINGS)
+        cmakeshift_get_target_property_(_SUPPRESSED_SETTINGS CMAKESHIFT_SUPPRESSED_COMPILE_SETTINGS)
+        cmakeshift_get_target_property_(_SUPPRESSED_INTERFACE_SETTINGS CMAKESHIFT_SUPPRESSED_INTERFACE_COMPILE_SETTINGS)
+        if(CMAKESHIFT_TRACE_OUTPUT)
+            message("[cmakeshift_target_compile_settings()] Target ${TARGET_NAME}: Previously applied settings: \"${_CURRENT_SETTINGS}\"")
+            message("[cmakeshift_target_compile_settings()] Target ${TARGET_NAME}: Previously applied interface settings: \"${_CURRENT_INTERFACE_SETTINGS}\"")
+            message("[cmakeshift_target_compile_settings()] Target ${TARGET_NAME}: Previously suppressed settings: \"${_SUPPRESSED_SETTINGS}\"")
+            message("[cmakeshift_target_compile_settings()] Target ${TARGET_NAME}: Previously suppressed interface settings \"${_SUPPRESSED_INTERFACE_SETTINGS}\"")
+        endif()
 
-		set(_RAW_SETTINGS_0 "${_RAW_SETTINGS}")
-		set(_RAW_INTERFACE_SETTINGS_0 "${_RAW_INTERFACE_SETTINGS}")
+        set(_RAW_SETTINGS_0 "${_RAW_SETTINGS}")
+        set(_RAW_INTERFACE_SETTINGS_0 "${_RAW_INTERFACE_SETTINGS}")
 
-		# Apply global settings if this is the first call to `cmakeshift_target_compile_settings()` for this target.
-		if(_TARGET_FIRST_TOUCH)
-			get_target_property(_TARGET_TYPE ${TARGET_NAME} TYPE)
-			# Interface library targets cannot have private settings; skip any global defaults.
-			if (NOT target_type STREQUAL INTERFACE_LIBRARY)
-				set(SCOPE_PRIVATE "${CMAKESHIFT_PRIVATE_COMPILE_SETTINGS}" "${CMAKESHIFT_PUBLIC_COMPILE_SETTINGS}" "${SCOPE_PRIVATE}")
-				
-				# Look for build option CPU_TARGET_ARCHITECTURE.
-				if(DEFINED CPU_TARGET_ARCHITECTURE AND NOT CPU_TARGET_ARCHITECTURE STREQUAL "")
-					set(SCOPE_PRIVATE "cpu-architecture=${CPU_TARGET_ARCHITECTURE}" "${SCOPE_PRIVATE}")
-				endif()
-				
-				# Look for build options CUDA_TARGET_ARCHITECTURE and CUDA_GPU_CODE.
-				if(HAVE_CUDA)
-					if(DEFINED CUDA_TARGET_ARCHITECTURE AND NOT CUDA_TARGET_ARCHITECTURE STREQUAL "")
-						set(SCOPE_PRIVATE "cuda-architecture=${CUDA_TARGET_ARCHITECTURE}" "${SCOPE_PRIVATE}")
-					endif()
-					if(DEFINED CUDA_GPU_CODE AND NOT CUDA_GPU_CODE STREQUAL "")
-						set(SCOPE_PRIVATE "cuda-gpu-code=${CUDA_GPU_CODE}" "${SCOPE_PRIVATE}")
-					endif()
-				endif()
-			endif()
-			set(SCOPE_INTERFACE "${CMAKESHIFT_INTERFACE_COMPILE_SETTINGS}" "${CMAKESHIFT_PUBLIC_COMPILE_SETTINGS}" "${SCOPE_INTERFACE}")
-		endif()
+        # Apply global settings if this is the first call to `cmakeshift_target_compile_settings()` for this target.
+        if(_TARGET_FIRST_TOUCH)
+            get_target_property(_TARGET_TYPE ${TARGET_NAME} TYPE)
+            # Interface library targets cannot have private settings; skip any global defaults.
+            if (NOT target_type STREQUAL INTERFACE_LIBRARY)
+                set(SCOPE_PRIVATE "${CMAKESHIFT_PRIVATE_COMPILE_SETTINGS}" "${CMAKESHIFT_PUBLIC_COMPILE_SETTINGS}" "${SCOPE_PRIVATE}")
+                
+                # Look for build option CPU_TARGET_ARCHITECTURE.
+                if(DEFINED CPU_TARGET_ARCHITECTURE AND NOT CPU_TARGET_ARCHITECTURE STREQUAL "")
+                    set(SCOPE_PRIVATE "cpu-architecture=${CPU_TARGET_ARCHITECTURE}" "${SCOPE_PRIVATE}")
+                endif()
+                
+                # Look for build options CUDA_TARGET_ARCHITECTURE and CUDA_GPU_CODE.
+                if(HAVE_CUDA)
+                    if(DEFINED CUDA_TARGET_ARCHITECTURE AND NOT CUDA_TARGET_ARCHITECTURE STREQUAL "")
+                        set(SCOPE_PRIVATE "cuda-architecture=${CUDA_TARGET_ARCHITECTURE}" "${SCOPE_PRIVATE}")
+                    endif()
+                    if(DEFINED CUDA_GPU_CODE AND NOT CUDA_GPU_CODE STREQUAL "")
+                        set(SCOPE_PRIVATE "cuda-gpu-code=${CUDA_GPU_CODE}" "${SCOPE_PRIVATE}")
+                    endif()
+                endif()
+            endif()
+            set(SCOPE_INTERFACE "${CMAKESHIFT_INTERFACE_COMPILE_SETTINGS}" "${CMAKESHIFT_PUBLIC_COMPILE_SETTINGS}" "${SCOPE_INTERFACE}")
+        endif()
 
-		foreach(arg IN LISTS SCOPE_PRIVATE SCOPE_PUBLIC)
-			cmakeshift_target_compile_setting_accumulate_(${TARGET_NAME} PRIVATE "${arg}")
-		endforeach()
-		foreach(arg IN LISTS SCOPE_INTERFACE SCOPE_PUBLIC)
-			cmakeshift_target_compile_setting_accumulate_(${TARGET_NAME} INTERFACE "${arg}")
-		endforeach()
+        foreach(arg IN LISTS SCOPE_PRIVATE SCOPE_PUBLIC)
+            cmakeshift_target_compile_setting_accumulate_(${TARGET_NAME} PRIVATE "${arg}")
+        endforeach()
+        foreach(arg IN LISTS SCOPE_INTERFACE SCOPE_PUBLIC)
+            cmakeshift_target_compile_setting_accumulate_(${TARGET_NAME} INTERFACE "${arg}")
+        endforeach()
 
-		foreach(arg IN LISTS SCOPE_PRIVATE SCOPE_PUBLIC)
-			cmakeshift_target_compile_setting_apply_(${TARGET_NAME} PRIVATE "${arg}")
-		endforeach()
-		foreach(arg IN LISTS SCOPE_INTERFACE SCOPE_PUBLIC)
-			cmakeshift_target_compile_setting_apply_(${TARGET_NAME} INTERFACE "${arg}")
-		endforeach()
+        foreach(arg IN LISTS SCOPE_PRIVATE SCOPE_PUBLIC)
+            cmakeshift_target_compile_setting_apply_(${TARGET_NAME} PRIVATE "${arg}")
+        endforeach()
+        foreach(arg IN LISTS SCOPE_INTERFACE SCOPE_PUBLIC)
+            cmakeshift_target_compile_setting_apply_(${TARGET_NAME} INTERFACE "${arg}")
+        endforeach()
 
-		set_target_properties(${TARGET_NAME}
-			PROPERTIES
-				CMAKESHIFT_COMPILE_SETTINGS "${_CURRENT_SETTINGS}"
-				CMAKESHIFT_INTERFACE_COMPILE_SETTINGS "${_CURRENT_INTERFACE_SETTINGS}"
-				CMAKESHIFT_RAW_COMPILE_SETTINGS "${_RAW_SETTINGS}"
-				CMAKESHIFT_RAW_INTERFACE_COMPILE_SETTINGS "${_RAW_INTERFACE_SETTINGS}"
-				CMAKESHIFT_SUPPRESSED_COMPILE_SETTINGS "${_SUPPRESSED_SETTINGS}"
-				CMAKESHIFT_SUPPRESSED_INTERFACE_COMPILE_SETTINGS "${_SUPPRESSED_INTERFACE_SETTINGS}")
-	endfunction()
+        set_target_properties(${TARGET_NAME}
+            PROPERTIES
+                CMAKESHIFT_COMPILE_SETTINGS "${_CURRENT_SETTINGS}"
+                CMAKESHIFT_INTERFACE_COMPILE_SETTINGS "${_CURRENT_INTERFACE_SETTINGS}"
+                CMAKESHIFT_RAW_COMPILE_SETTINGS "${_RAW_SETTINGS}"
+                CMAKESHIFT_RAW_INTERFACE_COMPILE_SETTINGS "${_RAW_INTERFACE_SETTINGS}"
+                CMAKESHIFT_SUPPRESSED_COMPILE_SETTINGS "${_SUPPRESSED_SETTINGS}"
+                CMAKESHIFT_SUPPRESSED_INTERFACE_COMPILE_SETTINGS "${_SUPPRESSED_INTERFACE_SETTINGS}")
+    endfunction()
 
 
-	# Set variables HAVE_CUDA and PASSTHROUGH to support the NVCC compiler driver.
-	set(HAVE_CUDA FALSE)
-	set(PASSTHROUGH "")
-	get_property(_ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
-	if(CUDA IN_LIST _ENABLED_LANGUAGES)
-		set(HAVE_CUDA TRUE)
-		if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
-			set(PASSTHROUGH "$<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=>")
-		else()
-			message(FATAL_ERROR "cmakeshift_target_compile_settings(): Unknown CUDA compiler: CMAKE_CUDA_COMPILER_ID=${CMAKE_CUDA_COMPILER_ID}")
-		endif()
-	endif()
+    # Set variables HAVE_CUDA and PASSTHROUGH to support the NVCC compiler driver.
+    set(HAVE_CUDA FALSE)
+    set(PASSTHROUGH "")
+    get_property(_ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
+    if(CUDA IN_LIST _ENABLED_LANGUAGES)
+        set(HAVE_CUDA TRUE)
+        if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
+            set(PASSTHROUGH "$<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=>")
+        else()
+            message(FATAL_ERROR "cmakeshift_target_compile_settings(): Unknown CUDA compiler: CMAKE_CUDA_COMPILER_ID=${CMAKE_CUDA_COMPILER_ID}")
+        endif()
+    endif()
 
     set(options "")
     set(oneValueArgs "")
     set(multiValueArgs PRIVATE INTERFACE PUBLIC TARGETS)
     cmake_parse_arguments(PARSE_ARGV 0 "SCOPE" "${options}" "${oneValueArgs}" "${multiValueArgs}")
     if(SCOPE_UNPARSED_ARGUMENTS)
-		list(LENGTH SCOPE_UNPARSED_ARGUMENTS _NUM_UNPARSED_ARGUMENTS)
-		if(_NUM_UNPARSED_ARGUMENTS GREATER_EQUAL 1)
-			if(SCOPE_TARGETS)
-				message(SEND_ERROR "cmakeshift_target_compile_settings(): Specify either a single target as first parameter or multiple targets with the TARGETS argument, but not both")
-			else()
-				list(GET SCOPE_UNPARSED_ARGUMENTS 0 SCOPE_TARGETS)
-				list(REMOVE_AT SCOPE_UNPARSED_ARGUMENTS 0)
-			endif()
-			if(_NUM_UNPARSED_ARGUMENTS GREATER 1)
-				message(SEND_ERROR "cmakeshift_target_compile_settings(): Invalid argument keywords \"${SCOPE_UNPARSED_ARGUMENTS}\"; expected TARGETS, PRIVATE, INTERFACE, or PUBLIC")
-			endif()
-		endif()
-	endif()
-	if(NOT SCOPE_TARGETS)
-		message(SEND_ERROR "cmakeshift_target_compile_settings(): No target given; specify either a single target as first parameter or multiple targets with the TARGETS argument")
-	endif()
-	
-	foreach(TARGET_NAME IN LISTS SCOPE_TARGETS)
-		CMAKESHIFT_TARGET_COMPILE_SETTINGS_IMPL("${TARGET_NAME}")
-	endforeach()
+        list(LENGTH SCOPE_UNPARSED_ARGUMENTS _NUM_UNPARSED_ARGUMENTS)
+        if(_NUM_UNPARSED_ARGUMENTS GREATER_EQUAL 1)
+            if(SCOPE_TARGETS)
+                message(SEND_ERROR "cmakeshift_target_compile_settings(): Specify either a single target as first parameter or multiple targets with the TARGETS argument, but not both")
+            else()
+                list(GET SCOPE_UNPARSED_ARGUMENTS 0 SCOPE_TARGETS)
+                list(REMOVE_AT SCOPE_UNPARSED_ARGUMENTS 0)
+            endif()
+            if(_NUM_UNPARSED_ARGUMENTS GREATER 1)
+                message(SEND_ERROR "cmakeshift_target_compile_settings(): Invalid argument keywords \"${SCOPE_UNPARSED_ARGUMENTS}\"; expected TARGETS, PRIVATE, INTERFACE, or PUBLIC")
+            endif()
+        endif()
+    endif()
+    if(NOT SCOPE_TARGETS)
+        message(SEND_ERROR "cmakeshift_target_compile_settings(): No target given; specify either a single target as first parameter or multiple targets with the TARGETS argument")
+    endif()
+    
+    foreach(TARGET_NAME IN LISTS SCOPE_TARGETS)
+        CMAKESHIFT_TARGET_COMPILE_SETTINGS_IMPL("${TARGET_NAME}")
+    endforeach()
 
 endfunction()
