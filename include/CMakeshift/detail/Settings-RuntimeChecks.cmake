@@ -19,7 +19,7 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
 
 	# variables available from calling scope: SETTING, HAVE_CUDA, PASSTHROUGH, VAL, TARGET_NAME, SCOPE, LB, RB
 
-    if(OPTION STREQUAL "runtime-checks-stack")
+    if(SETTING STREQUAL "runtime-checks-stack")
         if(MSVC)
             # VC++ already enables stack frame run-time error checking and detection of uninitialized values by default in debug builds
 
@@ -34,7 +34,7 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
             target_compile_options(${TARGET_NAME} PRIVATE "${LB}${PASSTHROUGH}-fstack-protector${RB}")
         endif()
 
-    elseif(OPTION STREQUAL "runtime-checks-asan")
+    elseif(SETTING STREQUAL "runtime-checks-asan")
         # enable AddressSanitizer
         if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX OR (CMAKE_CXX_COMPILER_ID MATCHES "Clang"))
             target_compile_options(${TARGET_NAME} PRIVATE "${LB}${PASSTHROUGH}-fsanitize=address${RB}")
@@ -42,7 +42,7 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
             target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=address${RB}")
         endif()
 
-    elseif(OPTION STREQUAL "runtime-checks-ubsan")
+    elseif(SETTING STREQUAL "runtime-checks-ubsan")
         # enable UndefinedBehaviorSanitizer
         if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
             target_compile_options(${TARGET_NAME} PRIVATE "${LB}${PASSTHROUGH}-fsanitize=undefined${RB}")
@@ -64,7 +64,7 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
             endif()
         endif()
 
-    elseif(OPTION STREQUAL "debug-stdlib")
+    elseif(SETTING STREQUAL "debug-stdlib")
         if(MSVC)
             # enable checked iterators (not necessary in debug builds because these enable debug iterators by default, which are a superset of checked iterators)
             target_compile_definitions(${TARGET_NAME} PRIVATE "${LB}$<$<NOT:$<CONFIG:Debug>>:_ITERATOR_DEBUG_LEVEL=1>${RB}")
