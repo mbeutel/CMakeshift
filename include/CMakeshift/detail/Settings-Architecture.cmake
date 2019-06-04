@@ -14,7 +14,7 @@ list(APPEND _CMAKESHIFT_KNOWN_SETTINGS
 
 function(_CMAKESHIFT_SETTINGS_ARCHITECTURE)
 
-	# variables available from calling scope: SETTING, HAVE_CUDA, PASSTHROUGH, VAL, TARGET_NAME, SCOPE, LB, RB
+	# variables available from calling scope: SETTING, HAVE_<LANG>, PASSTHROUGH, VAL, TARGET_NAME, SCOPE, LB, RB
 
     if(SETTING STREQUAL "cpu-architecture")
 

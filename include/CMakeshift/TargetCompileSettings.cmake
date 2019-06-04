@@ -401,13 +401,24 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS)
                 CMAKESHIFT_SUPPRESSED_INTERFACE_COMPILE_SETTINGS "${_SUPPRESSED_INTERFACE_SETTINGS}")
     endfunction()
 
-
-    # Set variables HAVE_CUDA and PASSTHROUGH to support the NVCC compiler driver.
+    # Detect enabled languages and set flags.
+    set(HAVE_C FALSE)
+    set(HAVE_CXX FALSE)
     set(HAVE_CUDA FALSE)
-    set(PASSTHROUGH "")
     get_property(_ENABLED_LANGUAGES GLOBAL PROPERTY ENABLED_LANGUAGES)
+    if(C IN_LIST _ENABLED_LANGUAGES)
+        set(HAVE_C TRUE)
+    endif()
+    if(CXX IN_LIST _ENABLED_LANGUAGES)
+        set(HAVE_CXX TRUE)
+    endif()
     if(CUDA IN_LIST _ENABLED_LANGUAGES)
         set(HAVE_CUDA TRUE)
+    endif()
+
+    # Set variable PASSTHROUGH to support the NVCC compiler driver.
+    set(PASSTHROUGH "")
+    if(HAVE_CUDA)
         if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
             set(PASSTHROUGH "$<$<COMPILE_LANGUAGE:CUDA>:-Xcompiler=>")
         else()

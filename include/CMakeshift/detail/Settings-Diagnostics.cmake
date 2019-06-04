@@ -19,7 +19,7 @@ list(APPEND _CMAKESHIFT_KNOWN_SETTINGS
 
 function(_CMAKESHIFT_SETTINGS_DIAGNOSTICS)
 
-    # variables available from calling scope: SETTING, HAVE_CUDA, PASSTHROUGH, VAL, TARGET_NAME, SCOPE, LB, RB
+    # variables available from calling scope: SETTING, HAVE_<LANG>, PASSTHROUGH, VAL, TARGET_NAME, SCOPE, LB, RB
 
     if(SETTING STREQUAL "pedantic")
         message(DEPRECATION "cmakeshift_target_compile_settings(): the setting \"pedantic\" has been renamed to \"diagnostics-pedantic\"")

@@ -11,7 +11,7 @@ list(APPEND _CMAKESHIFT_KNOWN_SETTINGS
 
 function(_CMAKESHIFT_SETTINGS_OTHER)
 
-	# variables available from calling scope: SETTING, HAVE_CUDA, PASSTHROUGH, VAL, TARGET_NAME, SCOPE, LB, RB
+	# variables available from calling scope: SETTING, HAVE_<LANG>, PASSTHROUGH, VAL, TARGET_NAME, SCOPE, LB, RB
 
     if(SETTING STREQUAL "hidden-inline")
         message(DEPRECATION "cmakeshift_target_compile_settings(): the setting \"hidden-inline\" has been renamed to \"default-inlines-hidden\"")

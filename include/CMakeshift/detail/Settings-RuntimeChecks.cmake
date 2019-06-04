@@ -17,7 +17,7 @@ list(APPEND _CMAKESHIFT_KNOWN_SETTINGS
 
 function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
 
-	# variables available from calling scope: SETTING, HAVE_CUDA, PASSTHROUGH, VAL, TARGET_NAME, SCOPE, LB, RB
+	# variables available from calling scope: SETTING, HAVE_<LANG>, PASSTHROUGH, VAL, TARGET_NAME, SCOPE, LB, RB
 
     if(SETTING STREQUAL "runtime-checks-stack")
         if(MSVC)
@@ -44,7 +44,13 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
                 if (NOT target_type STREQUAL INTERFACE_LIBRARY)
                     # CUDA/NVCC has known incompatibilities with AddressSanitizer. We work around by setting "ASAN_OPTIONS=protect_shadow_gap=0" by providing a weakly
                     # linked `__asan_default_options()` function for any non-interface target.
-                    target_sources(${TARGET_NAME} "${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/CMakeshift_AddressSanitizer_CUDA_workaround.c")
+                    if(HAVE_C)
+                        target_sources(${TARGET_NAME} PRIVATE "${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/CMakeshift_AddressSanitizer_CUDA_workaround.c")
+                    elseif(HAVE_CXX)
+                        target_sources(${TARGET_NAME} PRIVATE "${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/CMakeshift_AddressSanitizer_CUDA_workaround.cpp")
+                    else() # HAVE_CUDA
+                        target_sources(${TARGET_NAME} PRIVATE "${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/CMakeshift_AddressSanitizer_CUDA_workaround.cu")
+                    endif()
                 endif()
             endif()
         endif()
