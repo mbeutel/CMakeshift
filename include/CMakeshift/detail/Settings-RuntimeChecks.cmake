@@ -24,8 +24,16 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
             # VC++ already enables stack frame run-time error checking and detection of uninitialized values by default in debug builds
 
             # insert control flow guards
-            target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/guard:cf${RB}")
-            target_link_libraries(${TARGET_NAME} ${SCOPE} "${LB}-guard:cf${RB}") # this flag also needs to be passed to the linker (CMake needs a leading '-' to recognize a flag here)
+            # Option "/ZI" (enable Edit & Continue) is incompatible with "/guard:cf", so suppress the latter if "/ZI" is present.
+            set(FLAG_COND "0")
+            if(CMAKE_CXX_FLAGS_DEBUG MATCHES "/ZI")
+                set(FLAG_COND "${FLAG_COND},$<CONFIG:Debug>")
+            endif()
+            if(CMAKE_CXX_FLAGS_RELWITHDEBINFO MATCHES "/ZI")
+                set(FLAG_COND "${FLAG_COND},$<CONFIG:RelWithDebInfo>")
+            endif()
+            target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}$<$<NOT:$<OR:${FLAG_COND}>>:/guard:cf>${RB}")
+            target_link_libraries(${TARGET_NAME} ${SCOPE} "${LB}$<$<NOT:$<OR:${FLAG_COND}>>:-guard:cf>${RB}") # this flag also needs to be passed to the linker (CMake needs a leading '-' to recognize a flag here)
         endif()
 
         if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
