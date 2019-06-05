@@ -53,11 +53,11 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
                     # CUDA/NVCC has known incompatibilities with AddressSanitizer. We work around by setting "ASAN_OPTIONS=protect_shadow_gap=0" by providing a weakly
                     # linked `__asan_default_options()` function for any non-interface target.
                     if(HAVE_C)
-                        target_sources(${TARGET_NAME} PRIVATE "${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/CMakeshift_AddressSanitizer_CUDA_workaround.c")
+                        target_sources(${TARGET_NAME} PRIVATE "${LB}${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/CMakeshift_AddressSanitizer_CUDA_workaround.c${RB}")
                     elseif(HAVE_CXX)
-                        target_sources(${TARGET_NAME} PRIVATE "${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/CMakeshift_AddressSanitizer_CUDA_workaround.cpp")
+                        target_sources(${TARGET_NAME} PRIVATE "${LB}${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/CMakeshift_AddressSanitizer_CUDA_workaround.cpp${RB}")
                     else() # HAVE_CUDA
-                        target_sources(${TARGET_NAME} PRIVATE "${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/CMakeshift_AddressSanitizer_CUDA_workaround.cu")
+                        target_sources(${TARGET_NAME} PRIVATE "${LB}${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/CMakeshift_AddressSanitizer_CUDA_workaround.cu${RB}")
                     endif()
                 endif()
             endif()
