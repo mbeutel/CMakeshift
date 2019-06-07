@@ -1,4 +1,6 @@
 
+cmake_minimum_required(VERSION 3.12)
+
 if(@SETUP_PACKAGE_CONFIG_FOR_INSTALLATION@)
     # This is an installed package; the modules have been installed to the current config directory.
     set(CMAKESHIFT_SCRIPT_DIR "${CMAKE_CURRENT_LIST_DIR}/cmake")
@@ -12,3 +14,6 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKESHIFT_SCRIPT_DIR}")
 
 # Add the CMakeshift find module path to the module path.
 list(APPEND CMAKE_MODULE_PATH "${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/modules")
+
+# Include the CMakeshift wrapper for the INSTALL() function.
+include(${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/Install.cmake)
