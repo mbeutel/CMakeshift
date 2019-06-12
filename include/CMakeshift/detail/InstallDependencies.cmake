@@ -3,7 +3,7 @@
 # InstallDependencies.cmake
 # Author: Moritz Beutel
 
-function(_cmakeshift_install_targets)
+function(cmakeshift_install_targets_)
 
     set(_TARGET_TYPES "ARCHIVE" "LIBRARY" "RUNTIME" "OBJECTS" "FRAMEWORK" "BUNDLE" "PRIVATE_HEADER" "PUBLIC_HEADER" "RESOURCE" "INCLUDES")
 
@@ -54,7 +54,6 @@ function(_cmakeshift_install_targets)
                 if(TARGET_TYPE STREQUAL EXECUTABLE)
                     add_custom_target(${TARGET}_InstallDLLs
                         COMMAND
-                        _TARGET_OUTPUT_DIR
                             PowerShell -NoProfile -ExecutionPolicy Bypass -file "${_VCPKG_TOOLCHAIN_DIR}/msbuild/applocal.ps1"
                                 -targetBinary "$<TARGET_FILE:${TARGET}>"
                                 -installedDir "${CMAKE_INSTALL_PREFIX}/${RUNTIME_DESTINATION}"

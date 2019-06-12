@@ -14,6 +14,3 @@ list(APPEND CMAKE_MODULE_PATH "${CMAKESHIFT_SCRIPT_DIR}")
 
 # Add the CMakeshift find module path to the module path.
 list(APPEND CMAKE_MODULE_PATH "${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/modules")
-
-# Include the CMakeshift wrapper for the INSTALL() function.
-include(${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/Install.cmake)

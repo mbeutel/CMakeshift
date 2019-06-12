@@ -10,15 +10,15 @@ get_filename_component(CMAKESHIFT_SCRIPT_DIR "${CMAKE_CURRENT_LIST_DIR}" DIRECTO
 
 # Wrapper of CMake's INSTALL() command which takes care of deployment of dependencies.
 #
-#     install(...)
+#     cmakeshift_install(...)
 #
-macro(INSTALL OPTION)
+macro(CMAKESHIFT_INSTALL OPTION)
 
-    _install(${ARGV})
+    install(${ARGV})
 
     if("${OPTION}" STREQUAL "TARGETS")
-        include(${CMAKESHIFT_SCRIPT_DIR}/detail/InstallDependencies.cmake)
-        _cmakeshift_install_targets(${ARGN})
+        include(${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/InstallDependencies.cmake)
+        cmakeshift_install_targets_(${ARGN})
     endif()
 
 endmacro()
