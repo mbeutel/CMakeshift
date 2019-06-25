@@ -63,6 +63,7 @@ include(CMakeshift/detail/Settings-Other)
 #
 #     default                                   default options everyone can agree on:
 #         default-base                              uncontroversial settings
+#         default-base                              enable uncontroversial compiler improvements currently marked as experimental
 #         default-output-directory                  place executables and shared libraries in ${PROJECT_BINARY_DIR}
 #         default-utf8-source                       source files use UTF-8 encoding
 #         default-windows-unicode                   UNICODE and _UNICODE are defined on Windows

@@ -10,6 +10,7 @@ list(APPEND _CMAKESHIFT_KNOWN_CUMULATIVE_SETTINGS
 
 list(APPEND _CMAKESHIFT_KNOWN_SETTINGS
     "default-base"
+    "default-experimental"
     "default-output-directory"
     "default-utf8-source"
     "default-windows-unicode"
@@ -47,6 +48,12 @@ function(_CMAKESHIFT_SETTINGS_DEFAULT)
 
             # remove unreferenced COMDATs to improve linker throughput
             target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/Zc:inline${RB}") # available since pre-modern VS 2013 Update 2
+        endif()
+
+    elseif(SETTING STREQUAL "default-experimental")
+        if(MSVC AND CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.21) # available since VS 2019 16.1
+            # enable new lambda processor to improve diagnostics and fix some constexpr scoping issues
+            target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/experimental:newLambdaProcessor${RB}")
         endif()
 
         if(HAVE_CUDA AND CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA") # NVCC
