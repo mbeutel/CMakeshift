@@ -139,7 +139,12 @@ function(_CMAKESHIFT_SETTINGS_DEFAULT)
         # configure compilers to be ISO C++ conformant
 
         # disable language extensions
-        set_target_properties(${TARGET_NAME} PROPERTIES CXX_EXTENSIONS OFF)
+        if(HAVE_C)
+            set_target_properties(${TARGET_NAME} PROPERTIES C_EXTENSIONS OFF)
+        endif()
+        if(HAVE_CXX)
+            set_target_properties(${TARGET_NAME} PROPERTIES CXX_EXTENSIONS OFF)
+        endif()
 
         if(MSVC)
             # make `volatile` behave as specified by the language standard, as opposed to the quasi-atomic semantics VC++ implements by default
