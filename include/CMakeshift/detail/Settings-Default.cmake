@@ -36,6 +36,15 @@ if(_VCPKG_ROOT_DIR AND VCPKG_TARGET_TRIPLET)
 endif()
 
 
+get_filename_component(_CMAKESHIFT_SOURCE_DIR "${CMAKE_SOURCE_DIR}" REALPATH)
+get_filename_component(_CMAKESHIFT_BINARY_DIR "${CMAKE_BINARY_DIR}" REALPATH)
+if("${_CMAKESHIFT_SOURCE_DIR}" STREQUAL "${_CMAKESHIFT_BINARY_DIR}")
+    message(FATAL_ERROR "cmakeshift_target_compile_settings(): the project source directory is identical to the build directory. \
+This practice is strongly discouraged, hence CMakeshift suppresses it. \
+Delete all build artifacts in the source directory (CMakeCache.txt, CMakeFiles/, cmake_install.cmake) and configure the project again with a different build directory.")
+endif()
+
+
 function(_CMAKESHIFT_SETTINGS_DEFAULT)
 
     # variables available from calling scope: SETTING, HAVE_<LANG>, PASSTHROUGH, VAL, TARGET_NAME, SCOPE, LB, RB
