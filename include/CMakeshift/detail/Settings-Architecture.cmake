@@ -14,7 +14,7 @@ list(APPEND _CMAKESHIFT_KNOWN_SETTINGS
 
 function(_CMAKESHIFT_SETTINGS_ARCHITECTURE)
 
-	# variables available from calling scope: SETTING, HAVE_<LANG>, PASSTHROUGH, VAL, TARGET_NAME, SCOPE, LB, RB
+    # variables available from calling scope: SETTING, HAVE_<LANG>, PASSTHROUGH, VAL, TARGET_NAME, SCOPE, LB, RB
 
     if(SETTING STREQUAL "cpu-architecture")
 
@@ -116,24 +116,24 @@ function(_CMAKESHIFT_SETTINGS_ARCHITECTURE)
 
         if(NOT MODEL STREQUAL "" AND NOT MODEL STREQUAL "default")
 
-			if(HAVE_CUDA)
-				if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
-					if(MODEL STREQUAL "strict" OR MODEL STREQUAL "consistent")
-						target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--fmad=false>${RB}") # do not fuse multiplications and additions
-					elseif(MODEL STREQUAL "precise")
-						# default behavior; nothing to do
-					elseif(MODEL STREQUAL "fast")
-						target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--ftz=true>${RB}" "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--prec-div=false${RB}" "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--prec-sqrt=false>${RB}")
-					elseif(MODEL STREQUAL "fastest")
-						target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--use_fast_math>${RB}") # implies everything in "fast" above
-					else()
-						set(_SETTING_SET FALSE PARENT_SCOPE)
-					endif()
-					
-				else()
-					message(FATAL_ERROR "cmakeshift_target_compile_settings(): Unknown CUDA compiler: CMAKE_CUDA_COMPILER_ID=${CMAKE_CUDA_COMPILER_ID}")
-				endif()
-			endif()
+            if(HAVE_CUDA)
+                if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
+                    if(MODEL STREQUAL "strict" OR MODEL STREQUAL "consistent")
+                        target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--fmad=false>${RB}") # do not fuse multiplications and additions
+                    elseif(MODEL STREQUAL "precise")
+                        # default behavior; nothing to do
+                    elseif(MODEL STREQUAL "fast")
+                        target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--ftz=true>${RB}" "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--prec-div=false${RB}" "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--prec-sqrt=false>${RB}")
+                    elseif(MODEL STREQUAL "fastest")
+                        target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--use_fast_math>${RB}") # implies everything in "fast" above
+                    else()
+                        set(_SETTING_SET FALSE PARENT_SCOPE)
+                    endif()
+                    
+                else()
+                    message(FATAL_ERROR "cmakeshift_target_compile_settings(): Unknown CUDA compiler: CMAKE_CUDA_COMPILER_ID=${CMAKE_CUDA_COMPILER_ID}")
+                endif()
+            endif()
 
             if(MSVC)
                 if(MODEL STREQUAL "strict" OR MODEL STREQUAL "consistent")
@@ -195,24 +195,24 @@ function(_CMAKESHIFT_SETTINGS_ARCHITECTURE)
         string(TOLOWER "${VAL}" ARCH)
 
         if(HAVE_CUDA AND NOT ARCH STREQUAL "" AND NOT ARCH STREQUAL "default")
-			if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
-				target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--gpu-architecture=${ARCH}>${RB}")
-			else()
-				message(FATAL_ERROR "cmakeshift_target_compile_settings(): Unknown CUDA compiler: CMAKE_CUDA_COMPILER_ID=${CMAKE_CUDA_COMPILER_ID}")
-			endif()
-		endif()
+            if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--gpu-architecture=${ARCH}>${RB}")
+            else()
+                message(FATAL_ERROR "cmakeshift_target_compile_settings(): Unknown CUDA compiler: CMAKE_CUDA_COMPILER_ID=${CMAKE_CUDA_COMPILER_ID}")
+            endif()
+        endif()
         
     elseif(SETTING STREQUAL "cuda-gpu-code")
 
         string(TOLOWER "${VAL}" GPUCODE)
 
         if(HAVE_CUDA AND NOT GPUCODE STREQUAL "" AND NOT GPUCODE STREQUAL "default")
-			if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
-				target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--gpu-code=${GPUCODE}>${RB}")
-			else()
-				message(FATAL_ERROR "cmakeshift_target_compile_settings(): Unknown CUDA compiler: CMAKE_CUDA_COMPILER_ID=${CMAKE_CUDA_COMPILER_ID}")
-			endif()
-		endif()
+            if(CMAKE_CUDA_COMPILER_ID MATCHES "NVIDIA")
+                target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<COMPILE_LANGUAGE:CUDA>:--gpu-code=${GPUCODE}>${RB}")
+            else()
+                message(FATAL_ERROR "cmakeshift_target_compile_settings(): Unknown CUDA compiler: CMAKE_CUDA_COMPILER_ID=${CMAKE_CUDA_COMPILER_ID}")
+            endif()
+        endif()
 
     else()
         set(_SETTING_SET FALSE PARENT_SCOPE)

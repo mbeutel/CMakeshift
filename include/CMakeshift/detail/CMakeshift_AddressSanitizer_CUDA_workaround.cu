@@ -6,8 +6,8 @@ __attribute__((weak)) /* prevent any linking errors when linking multiple CUDA l
 __attribute__((visibility("default")))
 const char* __asan_default_options(void)
 {
-		/* This option is used to make AddressSanitizer compatible with NVIDIA's CUDA runtime libraries and/or with NVCC, cf.
-		   https://devtalk.nvidia.com/default/topic/1037466/cuda-runtime-library-and-addresssanitizer-incompatibilty/ and
-		   https://github.com/google/sanitizers/issues/629 . */
+        /* This option is used to make AddressSanitizer compatible with NVIDIA's CUDA runtime libraries and/or with NVCC, cf.
+           https://devtalk.nvidia.com/default/topic/1037466/cuda-runtime-library-and-addresssanitizer-incompatibilty/ and
+           https://github.com/google/sanitizers/issues/629 . */
     return "protect_shadow_gap=0";
 }

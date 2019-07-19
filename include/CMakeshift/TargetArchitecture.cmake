@@ -67,7 +67,7 @@ endfunction()
 #
 function(CMAKESHIFT_TARGET_CONTRACT_MULTIPLY_ADD TARGETNAME CONTRACT)
 
-    message(DEPRECATION "cmakeshift_target_contract_multiply_add() is deprecated; instead use cmakeshift_target_compile_settings() with \"fp-contract=<permit|suppress|default>\".")
+    message(DEPRECATION "cmakeshift_target_contract_multiply_add() is deprecated; instead use cmakeshift_target_compile_settings() with \"fp-model=<model>\".")
 
     if(MSVC)
         # VC++ defaults to "/fp:precise", which does not permit FMA fusing
