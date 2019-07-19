@@ -173,7 +173,12 @@ function(_CMAKESHIFT_SETTINGS_DEFAULT)
         # enable debugging aids
         if(MSVC)
             # enable Just My Code for debugging convenience
-            if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.15)
+            
+            # use target property VS_JUST_MY_CODE_DEBUGGING if possible
+            if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.15)
+                set_target_properties(${TARGET_NAME} PROPERTIES VS_JUST_MY_CODE_DEBUGGING "${LB}$<$<CONFIG:Debug>:ON${RB}")
+                
+            elseif(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.15)
                 target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}$<$<CONFIG:Debug>:${PASSTHROUGH}/JMC>${RB}") # available since VS 2017 15.8
             endif()
         endif()
