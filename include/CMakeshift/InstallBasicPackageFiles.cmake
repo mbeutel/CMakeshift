@@ -246,6 +246,24 @@ include(CMakePackageConfigHelpers)
 include(CMakeParseArguments)
 
 
+# option() honors normal variables since CMake 3.13 (cf. https://cmake.org/cmake/help/git-stage/policy/CMP0077.html).
+if(POLICY CMP0077)
+  cmake_policy(SET CMP0077 NEW)
+endif()
+
+
+# Handle deprecated EXPORT_BUILD_DIR option.
+if(DEFINED EXPORT_BUILD_DIR)
+  if(NOT DEFINED CMAKE_EXPORT_PACKAGE_REGISTRY)
+    option(CMAKE_EXPORT_PACKAGE_REGISTRY "Export build directory (enables external use without install)" ${EXPORT_BUILD_DIR})
+  endif()
+  message(WARNING "[CMakeshift] Variable \"EXPORT_BUILD_DIR\" is deprecated; set \"CMAKE_EXPORT_PACKAGE_REGISTRY\" instead")
+endif()
+
+
+option(CMAKE_EXPORT_PACKAGE_REGISTRY "Export build directory (enables external use without install)" OFF)
+
+
 function(INSTALL_BASIC_PACKAGE_FILES _Name)
 
   # TODO check that _Name does not contain "-" characters (TODO: why would this be a problem?)
@@ -610,6 +628,12 @@ ${_compatibility_vars}
     export(${_export_cmd}
            NAMESPACE ${_IBPF_NAMESPACE}
            FILE "${_IBPF_EXPORT_DESTINATION}/${_targets_filename}")
+  endif()
+         
+  # Export build directory if CMAKE_EXPORT_PACKAGE_REGISTRY is set.
+  # This effectively back-ports new CMake 3.15 behavior (cf. https://cmake.org/cmake/help/latest/policy/CMP0090.html).
+  if(CMAKE_EXPORT_PACKAGE_REGISTRY)
+    export(PACKAGE ${_Name})
   endif()
 
   # <Name>Targets.cmake (installed)
