@@ -191,8 +191,8 @@
 # If the ``INCLUDED_CONTENT`` argument is passed, the specified content
 # (which might contain ``@variables@``) is appended to the generated
 # ``<Name>Config.cmake`` file.
-# When a ``CONFIG_TEMPLATE`` is passed, or a ``<Name>ConfigVersion.cmake.in`` or
-# a ``<name>-config-version.cmake.in file is available, these 2 arguments are
+# When a ``CONFIG_TEMPLATE`` is passed, or a ``<Name>Config.cmake.in`` or
+# a ``<name>-config.cmake.in file is available, these 2 arguments are
 # used to replace the ``@INCLUDED_CONTENT@`` string in this file.
 # This allows one to inject custom code to this file, useful e.g. to set
 # additional variables which are loaded by downstream projects.
@@ -251,6 +251,7 @@ function(INSTALL_BASIC_PACKAGE_FILES _Name)
   # TODO check that _Name does not contain "-" characters (TODO: why would this be a problem?)
 
   set(_options ARCH_INDEPENDENT
+               NO_EXPORT
                NO_SET_AND_CHECK_MACRO
                NO_CHECK_REQUIRED_COMPONENTS_MACRO
                UPPERCASE_FILENAMES
