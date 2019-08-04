@@ -28,7 +28,6 @@
 #                              [UPPERCASE_FILENAMES | LOWERCASE_FILENAMES]
 #                              [DEPENDENCIES <dependency1> "<dependency2> [...]" ...]
 #                              [PRIVATE_DEPENDENCIES <dependency1> "<dependency2> [...]" ...]
-#                              [INCLUDE_FILE <file> | INCLUDE_CONTENT <content>]
 #                              [COMPONENT <component>] # (default = "<Name>")
 #                             )
 #
@@ -185,17 +184,6 @@
 # The export can be passed using the ``EXPORT`` argument. If no export is
 # used (e.g. for a CMake script library), pass ``NO_EXPORT``.
 #
-# If the ``INCLUDE_FILE`` argument is passed, the content of the specified file
-# (which might contain ``@variables@``) is appended to the generated
-# ``<Name>Config.cmake`` file.
-# If the ``INCLUDE_CONTENT`` argument is passed, the specified content
-# (which might contain ``@variables@``) is appended to the generated
-# ``<Name>Config.cmake`` file.
-# This allows one to inject custom code to this file, useful e.g. to set
-# additional variables which are loaded by downstream projects.
-# These two arguments cannot be used if a ``CONFIG_TEMPLATE`` is passed, or a
-# ``<Name>Config.cmake.in`` or ``<name>-config.cmake.in file is available.
-#
 # If the ``COMPONENT`` argument is passed, it is forwarded to the
 # :command:`install` commands, otherwise ``<Name>`` is used.
 
@@ -256,7 +244,7 @@ if(DEFINED EXPORT_BUILD_DIR)
   if(NOT DEFINED CMAKE_EXPORT_PACKAGE_REGISTRY)
     option(CMAKE_EXPORT_PACKAGE_REGISTRY "Export build directory (enables external use without install)" ${EXPORT_BUILD_DIR})
   endif()
-  message(WARNING "[CMakeshift] Variable \"EXPORT_BUILD_DIR\" is deprecated; set \"CMAKE_EXPORT_PACKAGE_REGISTRY\" instead")
+  message(DEPRECATION "CMakeshift: Variable \"EXPORT_BUILD_DIR\" is deprecated; set \"CMAKE_EXPORT_PACKAGE_REGISTRY\" instead")
 endif()
 
 
@@ -283,11 +271,8 @@ function(INSTALL_BASIC_PACKAGE_FILES _Name)
                     VARS_PREFIX
                     EXPORT_DESTINATION
                     INSTALL_DESTINATION
-                    DESTINATION # Deprecated
                     NAMESPACE
                     CONFIG_TEMPLATE
-                    INCLUDE_FILE
-                    INCLUDE_CONTENT
                     COMPONENT)
   set(_multiValueArgs EXTRA_PATH_VARS_SUFFIX
                       DEPENDENCIES
@@ -318,10 +303,6 @@ function(INSTALL_BASIC_PACKAGE_FILES _Name)
     message(FATAL_ERROR "UPPERCASE_FILENAMES and LOWERCASE_FILENAMES arguments cannot be used together")
   endif()
 
-  if(DEFINED _IBPF_INCLUDE_FILE AND DEFINED _IBPF_INCLUDE_CONTENT)
-    message(FATAL_ERROR "INCLUDE_FILE and INCLUDE_CONTENT arguments cannot be used together")
-  endif()
-
   # Prepare install and export commands
   unset(_targets)
   set(_install_cmd EXPORT ${_Name})
@@ -330,14 +311,6 @@ function(INSTALL_BASIC_PACKAGE_FILES _Name)
   if(DEFINED _IBPF_EXPORT)
     set(_export_cmd EXPORT ${_IBPF_EXPORT})
     set(_install_cmd EXPORT ${_IBPF_EXPORT})
-  endif()
-
-  # Path for installed cmake files
-  if(DEFINED _IBPF_DESTINATION)
-    message(DEPRECATION "DESTINATION is deprecated. Use INSTALL_DESTINATION instead")
-    if(NOT DEFINED _IBPF_INSTALL_DESTINATION)
-      set(_IBPF_INSTALL_DESTINATION ${_IBPF_DESTINATION})
-    endif()
   endif()
 
   # FIXME CMake 3.7 use the same path
@@ -421,33 +394,6 @@ function(INSTALL_BASIC_PACKAGE_FILES _Name)
     endif()
   endif()
 
-  if(NOT _generate_file AND (DEFINED _IBPF_INCLUDE_FILE OR DEFINED _IBPF_INCLUDE_CONTENT))
-    message(FATAL_ERROR "INCLUDE_FILE and INCLUDE_CONTENT arguments cannot be used if a config template file is provided")
-  endif()
-
-  # Set input file containing user variables
-  if(DEFINED _IBPF_INCLUDE_FILE)
-    if(NOT IS_ABSOLUTE "${_IBPF_INCLUDE_FILE}")
-      if(EXISTS "${CMAKE_CURRENT_SOURCE_DIR}/${_IBPF_INCLUDE_FILE}")
-        set(_IBPF_INCLUDE_FILE "${CMAKE_CURRENT_SOURCE_DIR}/${_IBPF_INCLUDE_FILE}")
-      endif()
-    endif()
-    if(NOT EXISTS "${_IBPF_INCLUDE_FILE}")
-      message(FATAL_ERROR "File \"${_IBPF_INCLUDE_FILE}\" not found")
-    endif()
-    file(READ ${_IBPF_INCLUDE_FILE} _IBPF_INCLUDE_CONTENT)
-  endif()
-
-  if(DEFINED _IBPF_INCLUDE_CONTENT)
-    set(_INCLUDED_CONTENT
-"#### Expanded from INCLUDE_FILE/INCLUDE_CONTENT by install_basic_package_files() ####
-
-${_IBPF_INCLUDE_CONTENT}
-
-#####################################################################################
-")
-  endif()
-
   # Select output file names
   if(_IBPF_UPPERCASE_FILENAMES)
     set(_config_filename ${_Name}Config.cmake)
@@ -460,22 +406,9 @@ ${_IBPF_INCLUDE_CONTENT}
   endif()
 
 
-  # If the template config file does not exist, write a basic one
+  # If the template config file does not exist, use a basic one
   if(_generate_file)
-    # Write the file
-    if(_IBPF_NO_EXPORT)
-      set(_include_targets_cmd "")
-    else()
-      set(_include_targets_cmd "include(\"\${CMAKE_CURRENT_LIST_DIR}/${_targets_filename}\"")
-    endif()
-    file(WRITE "${_config_cmake_in}"
-"set(${_IBPF_VARS_PREFIX}_VERSION \@PACKAGE_VERSION\@)
-
-\@PACKAGE_INIT\@
-
-\@PACKAGE_DEPENDENCIES\@
-
-${_INCLUDED_CONTENT}")
+    set(_config_cmake_in "${CMAKESHIFT_SCRIPT_DIR}/detail/templates/Config.cmake.in")
   endif()
 
   # Make relative paths absolute (needed later on) and append the

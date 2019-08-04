@@ -21,5 +21,4 @@ install(
 install_basic_package_files(CMakeshift
     ARCH_INDEPENDENT
     NO_EXPORT
-    COMPATIBILITY SameMajorVersion
-    INCLUDE_FILE "CMakeshiftConfigTail.cmake")
+    COMPATIBILITY SameMajorVersion)

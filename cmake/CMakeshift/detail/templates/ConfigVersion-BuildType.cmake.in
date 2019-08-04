@@ -9,7 +9,7 @@ include("${CMAKE_CURRENT_LIST_DIR}/Shared@_version_filename@")
 #
 # Build configurations are considered to match if both are "Debug" or neither
 # is "Debug". All other configurations can be matched freely.
-if(NOT "@ARCH_INDEPENDENT@"
+if(NOT "@_IBPF_ARCH_INDEPENDENT@"
    AND NOT "@GENERATOR_IS_MULTI_CONFIG@"
    AND NOT CMAKESHIFT_IGNORE_EXPORTED_BUILD_DIR_CONFIG)
     if(GENERATOR_IS_MULTI_CONFIG)

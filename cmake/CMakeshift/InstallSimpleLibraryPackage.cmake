@@ -4,7 +4,7 @@
 # Author: Moritz Beutel
 
 
-message(DEPRECATION "\"InstallSimpleLibraryPackage\" is deprecated; instead include \"InstallBasicPackageFiles\".")
+message(DEPRECATION "CMakeshift: \"InstallSimpleLibraryPackage\" is deprecated; instead include \"InstallBasicPackageFiles\".")
 
 
 # Get the CMakeshift script include directory.
@@ -124,6 +124,7 @@ function(CMAKESHIFT_INSTALL_SIMPLE_LIBRARY_PACKAGE)
         # and additionally checks that build configurations match when referencing exported build directories when
         # not using a multi-config generator.
         set(_version_filename "${SCOPE_PROJECT}ConfigVersion.cmake")
+        set(_IBPF_ARCH_INDEPENDENT ${SCOPE_INTERFACE})
         configure_file("${CMAKESHIFT_SCRIPT_DIR}/detail/templates/ConfigVersion-BuildType.cmake.in"
             "${SCOPE_PROJECT_BINARY_DIR}/${_version_filename}" @ONLY)
         
