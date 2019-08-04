@@ -16,6 +16,7 @@
 #                              [VERSION <version>]
 #                              [ARCH_INDEPENDENT]
 #                              [EXPORT <export>] # (default = "<Name>")
+#                              [NO_EXPORT]
 #                              [NO_SET_AND_CHECK_MACRO]
 #                              [NO_CHECK_REQUIRED_COMPONENTS_MACRO]
 #                              [VARS_PREFIX <prefix>] # (default = "<Name>")
@@ -181,7 +182,8 @@
 # the build tree and :command:`install(EXPORT)` in the installation directory.
 # The targets are exported using the value for the ``NAMESPACE`` argument as
 # namespace.
-# The export can be passed using the ``EXPORT`` argument.
+# The export can be passed using the ``EXPORT`` argument. If no export is
+# used (e.g. for a CMake script library), pass ``NO_EXPORT``.
 #
 # If the ``INCLUDE_FILE`` argument is passed, the content of the specified file
 # (which might contain ``@variables@``) is appended to the generated
@@ -340,6 +342,12 @@ function(INSTALL_BASIC_PACKAGE_FILES _Name)
     set(_IBPF_COMPONENT "${_Name}")
   endif()
 
+  if(_IBPF_NO_EXPORT)
+    set(_install_component "")
+  else()
+    set(_install_component COMPONENT ${_IBPF_COMPONENT})
+  endif()
+
   if(_IBPF_NO_SET_AND_CHECK_MACRO)
     list(APPEND configure_package_config_file_extra_args NO_SET_AND_CHECK_MACRO)
   endif()
@@ -469,6 +477,11 @@ endif()
     endif()
 
     # Write the file
+    if(_IBPF_NO_EXPORT)
+      set(_include_targets_cmd "")
+    else()
+      set(_include_targets_cmd "include(\"\${CMAKE_CURRENT_LIST_DIR}/${_targets_filename}\"")
+    endif()
     file(WRITE "${_config_cmake_in}"
 "set(${_IBPF_VARS_PREFIX}_VERSION \@PACKAGE_VERSION\@)
 
@@ -476,7 +489,7 @@ endif()
 
 \@PACKAGE_DEPENDENCIES\@
 
-include(\"\${CMAKE_CURRENT_LIST_DIR}/${_targets_filename}\")
+${_include_targets_cmd}
 
 ${_compatibility_vars}
 
@@ -528,7 +541,7 @@ ${_compatibility_vars}
                                    ${_arch_independent})
   install(FILES "${_IBPF_EXPORT_DESTINATION}/${_version_filename}"
           DESTINATION ${_IBPF_INSTALL_DESTINATION}
-          COMPONENT ${_IBPF_COMPONENT})
+          ${_install_component})
 
 
   # Prepare PACKAGE_DEPENDENCIES variable
@@ -588,18 +601,22 @@ ${_compatibility_vars}
   install(FILES "${CMAKE_CURRENT_BINARY_DIR}${CMAKE_FILES_DIRECTORY}/${_config_filename}.install"
           DESTINATION ${_IBPF_INSTALL_DESTINATION}
           RENAME ${_config_filename}
-          COMPONENT ${_IBPF_COMPONENT})
+          ${_install_component})
 
 
   # <Name>Targets.cmake (build tree)
-  export(${_export_cmd}
-         NAMESPACE ${_IBPF_NAMESPACE}
-         FILE "${_IBPF_EXPORT_DESTINATION}/${_targets_filename}")
+  if(NOT _IBPF_NO_EXPORT)
+    export(${_export_cmd}
+           NAMESPACE ${_IBPF_NAMESPACE}
+           FILE "${_IBPF_EXPORT_DESTINATION}/${_targets_filename}")
+  endif()
 
   # <Name>Targets.cmake (installed)
-  install(${_install_cmd}
-          NAMESPACE ${_IBPF_NAMESPACE}
-          DESTINATION ${_IBPF_INSTALL_DESTINATION}
-          FILE "${_targets_filename}"
-          COMPONENT ${_IBPF_COMPONENT})
+  if(NOT _IBPF_NO_EXPORT)
+    install(${_install_cmd}
+            NAMESPACE ${_IBPF_NAMESPACE}
+            DESTINATION ${_IBPF_INSTALL_DESTINATION}
+            FILE "${_targets_filename}"
+            ${_install_component})
+  endif()
 endfunction()
