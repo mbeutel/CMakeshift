@@ -188,14 +188,13 @@
 # If the ``INCLUDE_FILE`` argument is passed, the content of the specified file
 # (which might contain ``@variables@``) is appended to the generated
 # ``<Name>Config.cmake`` file.
-# If the ``INCLUDED_CONTENT`` argument is passed, the specified content
+# If the ``INCLUDE_CONTENT`` argument is passed, the specified content
 # (which might contain ``@variables@``) is appended to the generated
 # ``<Name>Config.cmake`` file.
-# When a ``CONFIG_TEMPLATE`` is passed, or a ``<Name>Config.cmake.in`` or
-# a ``<name>-config.cmake.in file is available, these 2 arguments are
-# used to replace the ``@INCLUDED_CONTENT@`` string in this file.
 # This allows one to inject custom code to this file, useful e.g. to set
 # additional variables which are loaded by downstream projects.
+# These two arguments cannot be used if a ``CONFIG_TEMPLATE`` is passed, or a
+# ``<Name>Config.cmake.in`` or ``<name>-config.cmake.in file is available.
 #
 # If the ``COMPONENT`` argument is passed, it is forwarded to the
 # :command:`install` commands, otherwise ``<Name>`` is used.
@@ -262,6 +261,10 @@ endif()
 
 
 option(CMAKE_EXPORT_PACKAGE_REGISTRY "Export build directory (enables external use without install)" OFF)
+
+
+# Get the CMakeshift script include directory.
+set(CMAKESHIFT_SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 
 function(INSTALL_BASIC_PACKAGE_FILES _Name)
@@ -343,7 +346,7 @@ function(INSTALL_BASIC_PACKAGE_FILES _Name)
     if(WIN32 AND NOT CYGWIN)
       set(_IBPF_INSTALL_DESTINATION CMake)
     else()
-      set(_IBPF_INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${_Name})
+      set(_IBPF_INSTALL_DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/${_Name})
     endif()
   endif()
 
@@ -418,6 +421,10 @@ function(INSTALL_BASIC_PACKAGE_FILES _Name)
     endif()
   endif()
 
+  if(NOT _generate_file AND (DEFINED _IBPF_INCLUDE_FILE OR DEFINED _IBPF_INCLUDE_CONTENT))
+    message(FATAL_ERROR "INCLUDE_FILE and INCLUDE_CONTENT arguments cannot be used if a config template file is provided")
+  endif()
+
   # Set input file containing user variables
   if(DEFINED _IBPF_INCLUDE_FILE)
     if(NOT IS_ABSOLUTE "${_IBPF_INCLUDE_FILE}")
@@ -432,10 +439,7 @@ function(INSTALL_BASIC_PACKAGE_FILES _Name)
   endif()
 
   if(DEFINED _IBPF_INCLUDE_CONTENT)
-    string(CONFIGURE ${_IBPF_INCLUDE_CONTENT}
-           _IBPF_INCLUDE_CONTENT
-           @ONLY)
-    set(INCLUDED_CONTENT
+    set(_INCLUDED_CONTENT
 "#### Expanded from INCLUDE_FILE/INCLUDE_CONTENT by install_basic_package_files() ####
 
 ${_IBPF_INCLUDE_CONTENT}
@@ -458,43 +462,6 @@ ${_IBPF_INCLUDE_CONTENT}
 
   # If the template config file does not exist, write a basic one
   if(_generate_file)
-    # Generate the compatibility code
-    unset(_compatibility_vars)
-    if(_IBPF_ENABLE_COMPATIBILITY_VARS)
-      unset(_get_include_dir_code)
-      unset(_set_include_dir_code)
-      unset(_target_list)
-      foreach(_target ${_targets})
-        list(APPEND _target_list ${_IBPF_NAMESPACE}${_target})
-      endforeach()
-      if(DEFINED ${_IBPF_VARS_PREFIX}_BUILD_INCLUDEDIR OR
-         DEFINED BUILD_${_IBPF_VARS_PREFIX}_INCLUDEDIR OR
-         DEFINED ${_IBPF_VARS_PREFIX}_INSTALL_INCLUDEDIR OR
-         DEFINED INSTALL_${_IBPF_VARS_PREFIX}_INCLUDEDIR)
-        list(APPEND _include_dir_list "\"\@PACKAGE_${_IBPF_VARS_PREFIX}_INCLUDEDIR\@\"")
-      elseif(DEFINED ${_IBPF_VARS_PREFIX}_BUILD_INCLUDE_DIR OR
-             DEFINED BUILD_${_IBPF_VARS_PREFIX}_INCLUDE_DIR OR
-             DEFINED ${_IBPF_VARS_PREFIX}_INSTALL_INCLUDE_DIR OR
-             DEFINED INSTALL_${_IBPF_VARS_PREFIX}_INCLUDE_DIR)
-        list(APPEND _include_dir_list "\"\@PACKAGE_${_IBPF_VARS_PREFIX}_INCLUDE_DIR\@\"")
-      else()
-        unset(_include_dir_list)
-        foreach(_target ${_targets})
-          list(APPEND _include_dir_list "\$<TARGET_PROPERTY:${_IBPF_NAMESPACE}${_target},INTERFACE_INCLUDE_DIRECTORIES>")
-        endforeach()
-        string(REPLACE ";" " " _include_dir_list "${_include_dir_list}")
-        string(REPLACE ";" " " _target_list "${_target_list}")
-        set(_set_include_dir "")
-      endif()
-      set(_compatibility_vars
-"# Compatibility\nset(${_Name}_LIBRARIES ${_target_list})
-set(${_Name}_INCLUDE_DIRS ${_include_dir_list})
-if(NOT \"\${${_Name}_INCLUDE_DIRS}\" STREQUAL \"\")
-  list(REMOVE_DUPLICATES ${_Name}_INCLUDE_DIRS)
-endif()
-")
-    endif()
-
     # Write the file
     if(_IBPF_NO_EXPORT)
       set(_include_targets_cmd "")
@@ -508,12 +475,7 @@ endif()
 
 \@PACKAGE_DEPENDENCIES\@
 
-${_include_targets_cmd}
-
-${_compatibility_vars}
-
-\@INCLUDED_CONTENT\@
-")
+${_INCLUDED_CONTENT}")
   endif()
 
   # Make relative paths absolute (needed later on) and append the
@@ -553,13 +515,23 @@ ${_compatibility_vars}
   endforeach()
 
 
-  # <Name>ConfigVersion.cmake file (same for build tree and intall)
-  write_basic_package_version_file("${_IBPF_EXPORT_DESTINATION}/${_version_filename}"
+  # <Name>ConfigVersion.cmake file (build tree)
+  write_basic_package_version_file("${_IBPF_EXPORT_DESTINATION}/Shared${_version_filename}"
                                    VERSION ${_IBPF_VERSION}
                                    COMPATIBILITY ${_IBPF_COMPATIBILITY}
                                    ${_arch_independent})
-  install(FILES "${_IBPF_EXPORT_DESTINATION}/${_version_filename}"
+  configure_file("${CMAKESHIFT_SCRIPT_DIR}/detail/templates/ConfigVersion-BuildType.cmake.in"
+                 "${_IBPF_EXPORT_DESTINATION}/${_version_filename}" @ONLY)
+
+
+  # <Name>ConfigVersion.cmake file (installed)
+  write_basic_package_version_file("${_IBPF_EXPORT_DESTINATION}/${_version_filename}.install"
+                                   VERSION ${_IBPF_VERSION}
+                                   COMPATIBILITY ${_IBPF_COMPATIBILITY}
+                                   ${_arch_independent})
+  install(FILES "${_IBPF_EXPORT_DESTINATION}/${_version_filename}.install"
           DESTINATION ${_IBPF_INSTALL_DESTINATION}
+          RENAME ${_version_filename}
           ${_install_component})
 
 
