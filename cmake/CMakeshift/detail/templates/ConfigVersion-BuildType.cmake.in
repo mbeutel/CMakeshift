@@ -1,11 +1,17 @@
 
 # Include proper config version file.
-include("@SCOPE_PROJECT_BINARY_DIR@/@SCOPE_PROJECT@ConfigVersion-generic.cmake")
+include("${CMAKE_CURRENT_LIST_DIR}/Shared@_version_filename@")
 
 
-# If not using a multi-config generator, check that build configurations match when referencing exported
-# build directories.
-if(NOT @SCOPE_INTERFACE@ AND NOT @_GENERATOR_IS_MULTI_CONFIG@)
+# If not using a multi-config generator, and if not disabled by setting
+# CMAKESHIFT_IGNORE_EXPORTED_BUILD_DIR_CONFIG, check that build configurations
+# match when referencing exported build directories.
+#
+# Build configurations are considered to match if both are "Debug" or neither
+# is "Debug". All other configurations can be matched freely.
+if(NOT "@ARCH_INDEPENDENT@"
+   AND NOT "@GENERATOR_IS_MULTI_CONFIG@"
+   AND NOT CMAKESHIFT_IGNORE_EXPORTED_BUILD_DIR_CONFIG)
     if(GENERATOR_IS_MULTI_CONFIG)
         set(PACKAGE_VERSION "${PACKAGE_VERSION} single-config")
         set(PACKAGE_VERSION_UNSUITABLE TRUE)

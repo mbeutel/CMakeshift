@@ -4,12 +4,11 @@
 # Author: Moritz Beutel
 
 
-# Define build options.
-option(EXPORT_BUILD_DIR "Export build directory using CMake (enables external use without install)" OFF)
+message(DEPRECATION "\"InstallSimpleLibraryPackage\" is deprecated; instead include \"InstallBasicPackageFiles\".")
 
 
 # Get the CMakeshift script include directory.
-get_filename_component(CMAKESHIFT_SCRIPT_DIR "${CMAKE_CURRENT_LIST_DIR}" DIRECTORY)
+set(CMAKESHIFT_SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 
 
 # Install library package with the given exports.
@@ -32,6 +31,8 @@ get_filename_component(CMAKESHIFT_SCRIPT_DIR "${CMAKE_CURRENT_LIST_DIR}" DIRECTO
 #     CONFIG_TEMPLATE <filename>    specifies the "<package>.config.in" template file for the config module
 #
 function(CMAKESHIFT_INSTALL_SIMPLE_LIBRARY_PACKAGE)
+
+    message(DEPRECATION "Function cmakeshift_install_simple_library_package() in \"InstallSimpleLibraryPackage\" is deprecated; instead use install_basic_package_files() in \"InstallBasicPackageFiles\".")
 
     # Parse arguments.
     set(options INTERFACE)
@@ -122,13 +123,9 @@ function(CMAKESHIFT_INSTALL_SIMPLE_LIBRARY_PACKAGE)
         # Configure a *ConfigVersion.cmake file which includes the generic version checking file generated above
         # and additionally checks that build configurations match when referencing exported build directories when
         # not using a multi-config generator.
-        if(GENERATOR_IS_MULTI_CONFIG)
-            set(_GENERATOR_IS_MULTI_CONFIG TRUE)
-        else()
-            set(_GENERATOR_IS_MULTI_CONFIG FALSE) # to work around surprising behavior of evaluating empty conditions
-        endif()
-        configure_file("${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/templates/ConfigVersion-BuildType.cmake.in"
-            "${SCOPE_PROJECT_BINARY_DIR}/${SCOPE_PROJECT}ConfigVersion.cmake" @ONLY)
+        set(_version_filename "${SCOPE_PROJECT}ConfigVersion.cmake")
+        configure_file("${CMAKESHIFT_SCRIPT_DIR}/detail/templates/ConfigVersion-BuildType.cmake.in"
+            "${SCOPE_PROJECT_BINARY_DIR}/${_version_filename}" @ONLY)
         
         # Configure a *Config.cmake file for the export of the build directory from the template, reflecting the
         # current build options.
