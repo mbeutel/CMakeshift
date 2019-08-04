@@ -246,20 +246,16 @@ include(CMakeParseArguments)
 
 function(INSTALL_BASIC_PACKAGE_FILES _Name)
 
-  # TODO check that _Name does not contain "-" characters (TODO: why?)
+  # TODO check that _Name does not contain "-" characters (TODO: why would this be a problem?)
 
   set(_options ARCH_INDEPENDENT
                NO_SET_AND_CHECK_MACRO
                NO_CHECK_REQUIRED_COMPONENTS_MACRO
                UPPERCASE_FILENAMES
-               LOWERCASE_FILENAMES
-               NO_COMPATIBILITY_VARS # Deprecated
-               ENABLE_COMPATIBILITY_VARS) # Deprecated
+               LOWERCASE_FILENAMES)
   set(_oneValueArgs VERSION
                     COMPATIBILITY
                     EXPORT
-                    FIRST_TARGET # Deprecated
-                    TARGETS_PROPERTY # Deprecated
                     VARS_PREFIX
                     EXPORT_DESTINATION
                     INSTALL_DESTINATION
@@ -270,8 +266,6 @@ function(INSTALL_BASIC_PACKAGE_FILES _Name)
                     INCLUDE_CONTENT
                     COMPONENT)
   set(_multiValueArgs EXTRA_PATH_VARS_SUFFIX
-                      TARGETS # Deprecated
-                      TARGETS_PROPERTIES # Deprecated
                       DEPENDENCIES
                       PRIVATE_DEPENDENCIES)
   cmake_parse_arguments(_IBPF "${_options}" "${_oneValueArgs}" "${_multiValueArgs}" "${ARGN}")
@@ -310,43 +304,8 @@ function(INSTALL_BASIC_PACKAGE_FILES _Name)
   set(_export_cmd EXPORT ${_Name})
 
   if(DEFINED _IBPF_EXPORT)
-    if(DEFINED _IBPF_TARGETS OR DEFINED _IBPF_TARGETS_PROPERTIES OR DEFINED _IBPF_TARGETS_PROPERTIES)
-      message(FATAL_ERROR "EXPORT cannot be used with TARGETS, TARGETS_PROPERTY or TARGETS_PROPERTIES")
-    endif()
-
     set(_export_cmd EXPORT ${_IBPF_EXPORT})
     set(_install_cmd EXPORT ${_IBPF_EXPORT})
-
-  elseif(DEFINED _IBPF_TARGETS)
-    message(DEPRECATION "TARGETS is deprecated. Use EXPORT instead")
-
-    if(DEFINED _IBPF_TARGETS_PROPERTY OR DEFINED _IBPF_TARGETS_PROPERTIES)
-      message(FATAL_ERROR "TARGETS cannot be used with TARGETS_PROPERTY or TARGETS_PROPERTIES")
-    endif()
-
-    set(_targets ${_IBPF_TARGETS})
-    set(_export_cmd TARGETS ${_IBPF_TARGETS})
-
-  elseif(DEFINED _IBPF_TARGETS_PROPERTY)
-    message(DEPRECATION "TARGETS_PROPERTY is deprecated. Use EXPORT instead")
-
-    if(DEFINED _IBPF_TARGETS_PROPERTIES)
-      message(FATAL_ERROR "TARGETS_PROPERTIES cannot be used with TARGETS_PROPERTIES")
-    endif()
-
-    get_property(_targets GLOBAL PROPERTY ${_IBPF_TARGETS_PROPERTY})
-    set(_export_cmd TARGETS ${_targets})
-
-  elseif(DEFINED _IBPF_TARGETS_PROPERTIES)
-    message(DEPRECATION "TARGETS_PROPERTIES is deprecated. Use EXPORT instead")
-
-    set(_targets "") # Defined but empty
-    foreach(_prop ${_IBPF_TARGETS_PROPERTIES})
-      get_property(_prop_val GLOBAL PROPERTY ${_prop})
-      list(APPEND _targets ${_prop_val})
-    endforeach()
-    set(_export_cmd TARGETS ${_targets})
-
   endif()
 
   # Path for installed cmake files
@@ -365,32 +324,6 @@ function(INSTALL_BASIC_PACKAGE_FILES _Name)
     else()
       set(_IBPF_INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${_Name})
     endif()
-  endif()
-
-  # FIRST_TARGET is no longer used
-  if(DEFINED _IBPF_FIRST_TARGET)
-    message(DEPRECATION "FIRST_TARGET is deprecated.")
-  endif()
-
-  # NO_COMPATIBILITY_VARS and ENABLE_COMPATIBILITY_VARS cannot be used together
-  if(_IBPF_NO_COMPATIBILITY_VARS AND _ENABLE_COMPATIBILITY_VARS)
-    message(FATAL_ERROR "NO_COMPATIBILITY_VARS and ENABLE_COMPATIBILITY_VARS cannot be used together")
-  endif()
-  # NO_COMPATIBILITY_VARS is deprecated
-  if(_IBPF_NO_COMPATIBILITY_VARS)
-    message(DEPRECATION "NO_COMPATIBILITY_VARS is deprecated.")
-  endif()
-  # ENABLE_COMPATIBILITY_VARS is deprecated
-  if(_IBPF_ENABLE_COMPATIBILITY_VARS)
-    message(DEPRECATION "ENABLE_COMPATIBILITY_VARS is deprecated.")
-  endif()
-  # ENABLE_COMPATIBILITY_VARS does not work with EXPORT
-  if(NOT DEFINED _targets AND _IBPF_ENABLE_COMPATIBILITY_VARS)
-    message(FATAL_ERROR "ENABLE_COMPATIBILITY_VARS does not work with EXPORT")
-  endif()
-  # ENABLE_COMPATIBILITY_VARS can be enabled for projects still using targets
-  if(DEFINED _targets AND NOT _IBPF_NO_COMPATIBILITY_VARS AND NOT _IBPF_ENABLE_COMPATIBILITY_VARS)
-    message(AUTHOR_WARNING "Compatibility variables are no longer generated. Use ENABLE_COMPATIBILITY_VARS to re-enable them (deprecated) or define them using either INCLUDE_FILE or INCLUDE_CONTENT (recommended).")
   endif()
 
   if(NOT DEFINED _IBPF_EXPORT_DESTINATION)
@@ -482,15 +415,6 @@ ${_IBPF_INCLUDE_CONTENT}
 
 #####################################################################################
 ")
-  endif()
-
-  # Backwards compatibility
-  if(NOT _generate_file AND DEFINED _IBPF_INCLUDE_FILE)
-    file(READ ${_config_cmake_in} _config_cmake_in_content)
-    if("${_config_cmake_in_content}" MATCHES "@INCLUDED_FILE_CONTENT@")
-      message(DEPRECATION "The @INCLUDED_FILE_CONTENT@ variable is deprecated in favour of @INCLUDED_CONTENT@")
-      set(INCLUDED_FILE_CONTENT "${INCLUDED_CONTENT}")
-    endif()
   endif()
 
   # Select output file names
