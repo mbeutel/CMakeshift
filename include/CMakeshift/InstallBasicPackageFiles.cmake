@@ -12,8 +12,8 @@
 # project::
 #
 #  install_basic_package_files(<Name>
-#                              VERSION <version>
 #                              COMPATIBILITY <compatibility>
+#                              [VERSION <version>]
 #                              [ARCH_INDEPENDENT]
 #                              [EXPORT <export>] # (default = "<Name>")
 #                              [NO_SET_AND_CHECK_MACRO]
@@ -281,7 +281,10 @@ function(INSTALL_BASIC_PACKAGE_FILES _Name)
   endif()
 
   if(NOT DEFINED _IBPF_VERSION)
-    message(FATAL_ERROR "VERSION argument is required")
+    set(_IBPF_VERSION ${PROJECT_VERSION})
+    if(NOT _IBPF_VERSION)
+      message(FATAL_ERROR "VERSION argument is required (PROJECT_VERSION is empty)")
+    endif()
   endif()
 
   if(NOT DEFINED _IBPF_COMPATIBILITY)
