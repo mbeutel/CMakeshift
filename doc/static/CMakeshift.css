@@ -1,0 +1,6 @@
+/* Import the Sphinx theme style.  */
+@import url("default.css");
+
+div.related {
+    background-color: peru;
+}

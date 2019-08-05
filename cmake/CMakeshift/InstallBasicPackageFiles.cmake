@@ -73,8 +73,8 @@
 # considered relative to the ``CMAKE_CURRENT_BINARY_DIR`` directory.
 #
 # The ``<Name>ConfigVersion.cmake`` file is generated using
-# ``write_basic_package_version_file``. The ``VERSION``, ``COMPATIBILITY``, and
-# ``ARCH_INDEPENDENT``arguments are passed to this function.
+# :command:`write_basic_package_version_file`. The ``VERSION``, ``COMPATIBILITY``,
+# and ``ARCH_INDEPENDENT`` arguments are passed to this function.
 #
 # ``VERSION`` shall be in the form ``<major>[.<minor>[.<patch>[.<tweak>]]]]``.
 # If no ``VERSION`` is given, the ``PROJECT_VERSION`` variable is used.
@@ -87,7 +87,7 @@
 # or ``ExactVersion``).
 # These options are explained in :command:`write_basic_package_version_file`
 # command documentation.
-# If your project has more elaborated version matching rules, you will need to
+# If your project has more elaborate version matching rules, you will need to
 # write your own custom ConfigVersion.cmake file instead of using this macro.
 #
 # If the ``ARCH_INDEPENDENT`` option is enabled, the installed package version
@@ -186,6 +186,9 @@
 #
 # If the ``COMPONENT`` argument is passed, it is forwarded to the
 # :command:`install` commands, otherwise ``<Name>`` is used.
+#
+# The implementation of ``install_basic_package_files()`` was forked from
+# `YCM <https://github.com/robotology/ycm/blob/master/modules/InstallBasicPackageFiles.cmake>`_'s eponymous command.
 
 #=============================================================================
 # YCM - Extra CMake Modules for YARP and friends

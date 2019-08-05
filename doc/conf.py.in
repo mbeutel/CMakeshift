@@ -1,0 +1,85 @@
+#=============================================================================
+# CMake - Cross Platform Makefile Generator
+# Copyright 2000-2019 Kitware, Inc., Insight Software Consortium
+#
+# Distributed under the OSI-approved BSD License (the "License");
+# see accompanying file "CMake copyright.txt" for details.
+#
+# This software is distributed WITHOUT ANY WARRANTY; without even the
+# implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.
+# See the License for more information.
+#=============================================================================
+import sys
+import os
+import re
+import glob
+
+sys.path.insert(0, r'@conf_path@')
+
+source_suffix = '.rst'
+master_doc = 'index'
+
+project = 'CMakeshift'
+copyright = '@conf_copyright@'
+version = '@conf_version@' # feature version
+release = '@conf_release@' # full version string
+
+primary_domain = 'cmake'
+
+intersphinx_mapping = {'cmake': ('http://cmake.org/cmake/help/git-master', '@conf_path@/cmake-objects.inv')}
+extlinks = {'cmake-issue': ('http://www.cmake.org/Bug/view.php?id=%s', 'CMake issue #'),
+            'cmake-commit': ('http://cmake.org/gitweb?p=cmake.git;a=commitdiff;h=%s', '')}
+
+exclude_patterns = []
+
+todo_include_todos = True
+
+extensions = ['cmake',
+              'sphinx.ext.intersphinx',
+              'sphinx.ext.extlinks',
+              'sphinx.ext.todo']
+templates_path = ['@conf_path@/templates']
+
+#cmakeshift_manuals = sorted(glob.glob(r'@conf_docs@/manual/*.rst'))
+#cmakeshift_manual_description = re.compile('^\.\. cmake-manual-description:(.*)$')
+#man_pages = []
+#for fpath in cmakeshift_manuals:
+#    try:
+#        foobar = os.path.basename(fpath).split('.')
+#        print(foobar)
+#        name, sec, rst = os.path.basename(fpath).split('.')
+#        desc = None
+#        f = open(fpath, 'r')
+#        for l in f:
+#            m = cmakeshift_manual_description.match(l)
+#            if m:
+#                desc = m.group(1).strip()
+#                break
+#        f.close()
+#        if desc:
+#            man_pages.append(('manual/%s.%s' % (name, sec),
+#                              name, desc, [], int(sec)))
+#        else:
+#            sys.stderr.write("ERROR: No cmake-manual-description in '%s'\n" % fpath)
+#    except Exception as e:
+#        sys.stderr.write("ERROR processing %s: %s\n" % (fpath, str(e)))
+#man_show_urls = False
+
+html_show_sourcelink = True
+html_static_path = ['@conf_path@/static']
+html_style = 'CMakeshift.css'
+html_theme = 'default'
+html_theme_options = {
+    "externalrefs": "true",
+    "relbarbgcolor": "#b30",
+    "sidebarwidth": "300"
+}
+
+html_title = 'CMakeshift %s Documentation' % release
+html_short_title = '%s Documentation' % release
+#html_favicon = 'CMakeshift-favicon.ico'
+
+rst_epilog = """
+.. _`YCM`: https://github.com/robotology/ycm/
+
+"""

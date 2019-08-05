@@ -4,3 +4,5 @@ out/
 build-*/
 .vs/
 CMakeSettings.json
+*.pyc
+__pycache__/

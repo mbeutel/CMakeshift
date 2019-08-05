@@ -10,6 +10,14 @@ project(CMakeshift
     VERSION 3.5.0
     LANGUAGES)
 
+# Build options
+option(BUILD_DOCUMENTATION "Build documentation" OFF)
+
+# Targets
+if(BUILD_DOCUMENTATION)
+    add_subdirectory(doc)
+endif()
+
 # Installation
 include(GNUInstallDirs) # for CMAKE_INSTALL_DATADIR
 include(cmake/CMakeshift/InstallBasicPackageFiles.cmake)
