@@ -287,10 +287,10 @@ function(INSTALL_BASIC_PACKAGE_FILES _Name)
   endif()
 
   if(NOT DEFINED _IBPF_VERSION)
-    set(_IBPF_VERSION ${PROJECT_VERSION})
-    if(NOT _IBPF_VERSION)
-      message(FATAL_ERROR "VERSION argument is required (PROJECT_VERSION is empty)")
+    if(NOT DEFINED PROJECT_VERSION)
+      message(FATAL_ERROR "VERSION argument is required (PROJECT_VERSION is not defined)")
     endif()
+    set(_IBPF_VERSION ${PROJECT_VERSION})
   endif()
 
   if(NOT DEFINED _IBPF_COMPATIBILITY)
