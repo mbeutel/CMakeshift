@@ -5,7 +5,7 @@ CMakeshift
    :maxdepth: 2
    :caption: Contents:
 
-   manual/InstallBasicPackageFiles
+   modules/InstallBasicPackageFiles
 
 
 Introduction

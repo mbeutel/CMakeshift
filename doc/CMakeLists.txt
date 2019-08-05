@@ -23,7 +23,7 @@ set(conf_release "${PROJECT_NAME} ${PROJECT_VERSION}")
 configure_file(conf.py.in conf.py @ONLY)
 
 # Sphinx target
-file(GLOB SPHINX_MANUAL_SOURCES "${conf_docs}/manual/*.rst")
+file(GLOB SPHINX_MANUAL_SOURCES "${conf_docs}/modules/*.rst")
 file(GLOB SPHINX_CMAKE_SOURCES "${PROJECT_SOURCE_DIR}/cmake/CMakeshift/*.cmake")
 add_custom_command(
     OUTPUT ${SPHINX_INDEX_FILE}
