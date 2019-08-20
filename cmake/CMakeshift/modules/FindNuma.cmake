@@ -10,7 +10,7 @@
 #
 # This will define the following variables::
 #
-#   Numa_FOUND    - True if the Numa library was found
+#   NUMA_FOUND    - True if the Numa library was found
 #
 # and the following imported targets::
 #
@@ -20,31 +20,27 @@
 #
 #   NUMA_ROOT     - Optional path where to search for Numa
 
-find_path(Numa_INCLUDE_DIR
+find_path(NUMA_INCLUDE_DIR
     NAMES numa.h
-    PATHS "${PROJECT_SOURCE_DIR}/external/include" "${PROJECT_SOURCE_DIR}/external/numa/include")
-find_library(Numa_LIBRARY
+    PATHS "${PROJECT_SOURCE_DIR}/external" "${PROJECT_SOURCE_DIR}/external/numa"
+    PATH_SUFFIXES "include")
+find_library(NUMA_LIBRARY
     NAMES numa
-    PATHS "${PROJECT_SOURCE_DIR}/external/lib" "${PROJECT_SOURCE_DIR}/external/numa/lib")
+    PATHS "${PROJECT_SOURCE_DIR}/external" "${PROJECT_SOURCE_DIR}/external/numa"
+    PATH_SUFFIXES "lib" "lib64")
 
 include(FindPackageHandleStandardArgs)
-find_package_handle_standard_args(Numa REQUIRED_VARS Numa_INCLUDE_DIR Numa_LIBRARY)
+find_package_handle_standard_args(Numa REQUIRED_VARS NUMA_INCLUDE_DIR NUMA_LIBRARY)
 
-if(Numa_FOUND)
-    set(Numa_INCLUDE_DIRS "${Numa_INCLUDE_DIR}")
-    set(Numa_LIBRARIES "${Numa_LIBRARY}")
-
+if(NUMA_FOUND)
     # Define a target only if none has been defined yet.
     if(NOT TARGET Numa::Numa)
-        add_library(Numa::Numa INTERFACE IMPORTED)
+        add_library(Numa::Numa UNKNOWN IMPORTED)
         set_target_properties(Numa::Numa PROPERTIES
-            INTERFACE_INCLUDE_DIRECTORIES "${Numa_INCLUDE_DIRS}"
-            INTERFACE_LINK_LIBRARIES      "${Numa_LIBRARIES}")
-
-        if(NOT Numa_FIND_QUIETLY)
-            message(STATUS "Found Numa (find module at ${CMAKE_CURRENT_LIST_DIR}, headers at ${Numa_INCLUDE_DIRS}, library at ${Numa_LIBRARIES})")
-        endif()
+            INTERFACE_INCLUDE_DIRECTORIES ${NUMA_INCLUDE_DIR}
+            IMPORTED_LOCATION             ${NUMA_LIBRARY})
     endif()
 endif()
 
-mark_as_advanced(Numa_INCLUDE_DIR Numa_LIBRARY)
+mark_as_advanced(NUMA_INCLUDE_DIR NUMA_LIBRARY)
+

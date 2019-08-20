@@ -34,10 +34,6 @@ if(Clara_FOUND)
         add_library(Clara::Clara INTERFACE IMPORTED)
         set_target_properties(Clara::Clara PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${Clara_INCLUDE_DIRS}")
-
-        if(NOT Clara_FIND_QUIETLY)
-            message(STATUS "Found Clara (find module at ${CMAKE_CURRENT_LIST_DIR}, headers at ${Clara_INCLUDE_DIRS})")
-        endif()
     endif()
 endif()
 

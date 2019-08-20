@@ -33,10 +33,6 @@ if(MS-GSL_FOUND)
         add_library(MS-GSL::MS-GSL INTERFACE IMPORTED)
         set_target_properties(MS-GSL::MS-GSL PROPERTIES
             INTERFACE_INCLUDE_DIRECTORIES "${MS-GSL_INCLUDE_DIRS}")
-
-        if(NOT MS-GSL_FIND_QUIETLY)
-            message(STATUS "Found MS-GSL (find module at ${CMAKE_CURRENT_LIST_DIR}, headers at ${MS-GSL_INCLUDE_DIRS})")
-        endif()
     endif()
     if(NOT TARGET MS-GSL::GSL)
         add_library(MS-GSL::GSL INTERFACE IMPORTED)

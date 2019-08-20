@@ -24,8 +24,4 @@ if(NOT TARGET Filesystem::Filesystem)
     if((CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX) AND CMAKE_CXX_COMPILER_VERSION VERSION_LESS 9.1)
         set_property(TARGET Filesystem::Filesystem PROPERTY INTERFACE_LINK_LIBRARIES "stdc++fs")
     endif()
-
-    if(NOT Filesystem_FIND_QUIETLY)
-        message(STATUS "Found Filesystem (find module at ${CMAKE_CURRENT_LIST_DIR})")
-    endif()
 endif()
