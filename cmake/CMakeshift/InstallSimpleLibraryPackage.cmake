@@ -99,7 +99,7 @@ function(CMAKESHIFT_INSTALL_SIMPLE_LIBRARY_PACKAGE)
         RENAME "${SCOPE_PROJECT}Config.cmake"
         DESTINATION "${RELATIVE_CONFIG_INSTALL_DIR}")
     install(
-        FILES "${SCOPE_PROJECT_BINARY_DIR}/${SCOPE_PROJECT}ConfigVersion-generic.cmake"
+        FILES "${SCOPE_PROJECT_BINARY_DIR}/Shared${SCOPE_PROJECT}ConfigVersion.cmake"
         RENAME "${SCOPE_PROJECT}ConfigVersion.cmake"
         DESTINATION "${RELATIVE_CONFIG_INSTALL_DIR}")
 
