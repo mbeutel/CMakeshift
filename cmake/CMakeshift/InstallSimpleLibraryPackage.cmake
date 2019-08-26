@@ -63,7 +63,7 @@ function(CMAKESHIFT_INSTALL_SIMPLE_LIBRARY_PACKAGE)
 
     # Generate package version file.
     include(CMakePackageConfigHelpers)
-    write_basic_package_version_file("${SCOPE_PROJECT_BINARY_DIR}/${SCOPE_PROJECT}ConfigVersion-generic.cmake"
+	write_basic_package_version_file("${SCOPE_PROJECT_BINARY_DIR}/Shared${SCOPE_PROJECT}ConfigVersion.cmake"
         VERSION ${SCOPE_PROJECT_VERSION}
         COMPATIBILITY ${SCOPE_VERSION_COMPATIBILITY})
 
