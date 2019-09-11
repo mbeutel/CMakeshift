@@ -106,10 +106,10 @@ include(CMakeshift/detail/Settings-Other)
 #     knl                       generate code for Intel Xeon Phi "Knights Landing"
 #
 # For the architectures "skylake-server-avx512" and "knl", the compile definition "PREFER_AVX512=1"
-# is added.
+# is added. (TODO: is this a good idea?)
 #
 # For architectures which support fused multiply--add opcodes, the compile definition
-# "HAVE_FUSED_MULTIPLY_ADD=1" is added.
+# "HAVE_FUSED_MULTIPLY_ADD=1" is added. (TODO: is this a good idea?)
 #
 # A project-wide default for the "cpu-architecture" setting can be set with the build option
 # "CPU_ARCHITECTURE" defined in CMakeshift/TargetArchitecture.cmake.
