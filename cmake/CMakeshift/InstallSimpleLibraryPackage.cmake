@@ -4,8 +4,7 @@
 # Author: Moritz Beutel
 
 
-# TODO: unleash when I figured out how to proceed with the YCM macros
-#message(DEPRECATION "CMakeshift: \"InstallSimpleLibraryPackage\" is deprecated; instead include \"InstallBasicPackageFiles\".")
+message(DEPRECATION "CMakeshift: \"InstallSimpleLibraryPackage\" is deprecated; instead include \"InstallBasicPackageFiles\".")
 
 
 # Get the CMakeshift script include directory.
@@ -33,8 +32,7 @@ set(CMAKESHIFT_SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
 #
 function(CMAKESHIFT_INSTALL_SIMPLE_LIBRARY_PACKAGE)
 
-    # TODO: unleash when I figured out how to proceed with the YCM macros
-    #message(DEPRECATION "Function cmakeshift_install_simple_library_package() in \"InstallSimpleLibraryPackage\" is deprecated; instead use install_basic_package_files() in \"InstallBasicPackageFiles\".")
+    message(DEPRECATION "Function cmakeshift_install_simple_library_package() in \"InstallSimpleLibraryPackage\" is deprecated; instead use cmakeshift_install_basic_package_files() in \"InstallBasicPackageFiles\".")
 
     # Parse arguments.
     set(options INTERFACE)
