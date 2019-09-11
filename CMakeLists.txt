@@ -26,7 +26,7 @@ set(CMakeshift_INSTALL_DATADIR "${CMAKE_INSTALL_DATADIR}/CMakeshift/cmake")
 install(
     DIRECTORY "${CMakeshift_BUILD_DATADIR}/" # the trailing '/' is significant
     DESTINATION ${CMakeshift_INSTALL_DATADIR})
-install_basic_package_files(CMakeshift
+cmakeshift_install_basic_package_files(CMakeshift
     ARCH_INDEPENDENT
     NO_EXPORT
     COMPATIBILITY SameMajorVersion)
