@@ -8,7 +8,7 @@ message(DEPRECATION "CMakeshift: \"InstallSimpleLibraryPackage\" is deprecated; 
 
 
 # Get the CMakeshift script include directory.
-set(CMAKESHIFT_SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR})
+get_filename_component(CMAKESHIFT_SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR} DIRECTORY)
 
 
 # Install library package with the given exports.
@@ -125,7 +125,7 @@ function(CMAKESHIFT_INSTALL_SIMPLE_LIBRARY_PACKAGE)
         # not using a multi-config generator.
         set(_version_filename "${SCOPE_PROJECT}ConfigVersion.cmake")
         set(_IBPF_ARCH_INDEPENDENT ${SCOPE_INTERFACE})
-        configure_file("${CMAKESHIFT_SCRIPT_DIR}/detail/templates/ConfigVersion-BuildType.cmake.in"
+        configure_file("${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/templates/ConfigVersion-BuildType.cmake.in"
             "${SCOPE_PROJECT_BINARY_DIR}/${_version_filename}" @ONLY)
         
         # Configure a *Config.cmake file for the export of the build directory from the template, reflecting the

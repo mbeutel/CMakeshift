@@ -5,7 +5,7 @@
 
 
 # Get the CMakeshift script include directory.
-get_filename_component(CMAKESHIFT_SCRIPT_DIR "${CMAKE_CURRENT_LIST_DIR}" DIRECTORY)
+get_filename_component(CMAKESHIFT_SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR} DIRECTORY)
 
 
 # Wrapper of CMake's INSTALL() command which takes care of deployment of dependencies.

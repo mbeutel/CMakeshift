@@ -9,6 +9,10 @@ if(DEFINED _CMAKESHIFT_KNOWN_SETTINGS)
 endif()
 
 
+# Get the CMakeshift script include directory.
+get_filename_component(CMAKESHIFT_SCRIPT_DIR ${CMAKE_CURRENT_LIST_DIR} DIRECTORY)
+
+
 define_property(TARGET
     PROPERTY CMAKESHIFT_COMPILE_SETTINGS
     BRIEF_DOCS "compile settings used for target"
