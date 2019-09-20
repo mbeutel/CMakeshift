@@ -77,10 +77,17 @@ function(_CMAKESHIFT_SETTINGS_DEFAULT)
         endif()
 
     elseif(SETTING STREQUAL "default-output-directory")
-        # place binaries in ${PROJECT_BINARY_DIR}
+        # place binaries in ${PROJECT_BINARY_DIR} unless target properties are set
         get_target_property(_TARGET_TYPE ${TARGET_NAME} TYPE)
         if(_TARGET_TYPE STREQUAL SHARED_LIBRARY OR _TARGET_TYPE STREQUAL MODULE_LIBRARY OR _TARGET_TYPE STREQUAL EXECUTABLE)
-            set_target_properties(${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}" LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+            get_target_property(_DIR ${TARGET_NAME} RUNTIME_OUTPUT_DIRECTORY)
+            if(NOT _DIR)
+                set_target_properties(${TARGET_NAME} PROPERTIES RUNTIME_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+            endif()
+            get_target_property(_DIR ${TARGET_NAME} LIBRARY_OUTPUT_DIRECTORY)
+            if(NOT _DIR)
+                set_target_properties(${TARGET_NAME} PROPERTIES LIBRARY_OUTPUT_DIRECTORY "${PROJECT_BINARY_DIR}")
+            endif()
         endif()
 
     elseif(SETTING STREQUAL "default-utf8-source")
