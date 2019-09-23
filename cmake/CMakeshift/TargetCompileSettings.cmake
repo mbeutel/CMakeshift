@@ -176,7 +176,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS)
             set(_INTERFACE "")
         endif()
 
-        if(NOT SETTING0 MATCHES "^[Nn][Oo]-([A-Za-z-]+)=?$")
+        if(NOT SETTING0 MATCHES "^[Nn][Oo]-([_A-Za-z0-9-]+)=?$")
             return()
         endif()
         set(SETTING1 "${CMAKE_MATCH_1}")
@@ -189,7 +189,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS)
         if("${SETTING}" IN_LIST _CMAKESHIFT_KNOWN_CUMULATIVE_SETTINGS)
             # Recur and suppress all settings that match the stem.
             foreach(_SETTING IN LISTS _CMAKESHIFT_KNOWN_SETTINGS)
-                if(_SETTING MATCHES "^${SETTING}-[A-Za-z-]+=?$") # this includes settings with arguments, e.g. "cpu-architecture="
+                if(_SETTING MATCHES "^${SETTING}-[_A-Za-z0-9-]+=?$") # this includes settings with arguments, e.g. "cpu-architecture="
                     cmakeshift_target_compile_setting_accumulate_(${TARGET_NAME} ${SCOPE} "no-${_SETTING}")
                     set(_SUPPRESSED${_INTERFACE}_SETTINGS "${_SUPPRESSED${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
                 endif()
@@ -232,7 +232,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS)
             set(_INTERFACE "")
         endif()
 
-        if(SETTING0 MATCHES "^\\$<(.+):([A-Za-z-]+(=.*)?)>$")
+        if(SETTING0 MATCHES "^\\$<(.+):([_A-Za-z0-9-]+(=.*)?)>$")
             set(LB "$<${CMAKE_MATCH_1}:")
             set(SETTING1 "${CMAKE_MATCH_2}")
             set(RB ">")
@@ -242,7 +242,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS)
             set(RB "")
         endif()
 
-        if(SETTING1 MATCHES "^([A-Za-z-]+)(=)(.*)$")
+        if(SETTING1 MATCHES "^([_A-Za-z0-9-]+)(=)(.*)$")
             set(SETTING2 "${CMAKE_MATCH_1}")
             set(VAL_EQ "${CMAKE_MATCH_2}")
             set(VAL "${CMAKE_MATCH_3}")
@@ -257,7 +257,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS)
         endif()
         string(TOLOWER "${SETTING2}" SETTING)
 
-        if(SETTING MATCHES "^no-[A-Za-z-]+$")
+        if(SETTING MATCHES "^no-[_A-Za-z0-9-]+$")
             if(NOT LB STREQUAL "")
                 message(SEND_ERROR "cmakeshift_target_compile_settings(): \"${SETTING0}\": Cannot use generator expression with suppressed options")
             endif()
@@ -268,7 +268,7 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS)
         if("${SETTING}" IN_LIST _CMAKESHIFT_KNOWN_CUMULATIVE_SETTINGS)
             # Recur and set all settings that match the stem.
             foreach(_SETTING IN LISTS _CMAKESHIFT_KNOWN_SETTINGS)
-                if(_SETTING MATCHES "^${SETTING}-[A-Za-z-]+$") # this implicitly skips settings with arguments, e.g. "cpu-architecture="
+                if(_SETTING MATCHES "^${SETTING}-[_A-Za-z0-9-]+$") # this implicitly skips settings with arguments, e.g. "cpu-architecture="
                     cmakeshift_target_compile_setting_apply_(${TARGET_NAME} ${SCOPE} "${LB}${_SETTING}${RB}")
                     set(_RAW_${_INTERFACE}_SETTINGS "${_RAW${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
                     set(_CURRENT${_INTERFACE}_SETTINGS "${_CURRENT${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
