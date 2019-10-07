@@ -40,11 +40,36 @@ if(NOT CMAKESHIFT_PERMIT_IN_SOURCE_BUILD)
     get_filename_component(_CMAKESHIFT_SOURCE_DIR "${CMAKE_SOURCE_DIR}" REALPATH)
     get_filename_component(_CMAKESHIFT_BINARY_DIR "${CMAKE_BINARY_DIR}" REALPATH)
     if("${_CMAKESHIFT_SOURCE_DIR}" STREQUAL "${_CMAKESHIFT_BINARY_DIR}")
-        message(WARNING "cmakeshift_target_compile_settings(): the project source directory is identical to the build directory. \
+        message(WARNING "cmakeshift_target_compile_settings() sanity check: the project source directory is identical to the build directory. \
 This practice is discouraged. \
 Delete all build artifacts in the source directory (CMakeCache.txt, CMakeFiles/, cmake_install.cmake) and configure the project again with a different build directory. \
-If you need to build in-source, you can disable this warning by defining CMAKESHIFT_PERMIT_IN_SOURCE_BUILD=ON.")
+If you need to build in-source, you can disable this sanity check by setting CMAKESHIFT_PERMIT_IN_SOURCE_BUILD=ON.")
     endif()
+endif()
+
+
+# Sanity check: if all of CMAKE_*_FLAGS_* are defined but empty, CMake failed to find the compiler in the first run.
+# This is dangerous because the default compiler flags will be silently missing. The recommended way out is to purge the
+# build directory and to rebuild.
+if(NOT CMAKESHIFT_PERMIT_EMPTY_FLAGS)
+    foreach(LANG IN ITEMS C CXX CUDA)
+        if(DEFINED CMAKE_${LANG}_COMPILER)
+            set(_CMAKESHIFT_SANITYCHECK_PASS FALSE)
+            foreach(CFG IN ITEMS DEBUG MINSIZEREL RELEASE RELWITHDEBINFO)
+                if(NOT DEFINED CMAKE_${LANG}_FLAGS_${CFG} OR NOT "${CMAKE_${LANG}_FLAGS_${CFG}}" STREQUAL "")
+                    set(_CMAKESHIFT_SANITYCHECK_PASS TRUE)
+                    break()
+                endif()
+            endforeach()
+
+            if(NOT _CMAKESHIFT_SANITYCHECK_PASS)
+                message(FATAL_ERROR "cmakeshift_target_compile_settings() sanity check: The default compile flags for ${LANG} are empty. \
+This usually happens if CMake fails to find a particular compiler during configuration. \
+Please purge the build directory, then make sure the compilers are available and configure the project again. \
+If you need to build with empty default compile flags, you can disable this sanity check by setting CMAKESHIFT_PERMIT_EMPTY_FLAGS=ON.")
+            endif()
+        endif()
+    endforeach()
 endif()
 
 
