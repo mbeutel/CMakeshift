@@ -36,7 +36,7 @@ add_custom_command(
     MAIN_DEPENDENCY "${CMAKE_CURRENT_BINARY_DIR}/conf.py"
     WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR}
     COMMENT "Generating documentation with Sphinx")
-add_custom_target(sphinx ALL
+add_custom_target(sphinx
     DEPENDS ${SPHINX_INDEX_FILE})
 
 # Installation
