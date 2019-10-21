@@ -10,3 +10,11 @@ list(APPEND CMAKE_MODULE_PATH "@PACKAGE_CMakeshift_DATADIR@")
 
 # Add the CMakeshift find module path to the module path.
 list(APPEND CMAKE_MODULE_PATH "@PACKAGE_CMakeshift_DATADIR@/CMakeshift/modules")
+
+# Fall back to linking Release builds of library targets when building with MinSizeRel or RelWithDebInfo.
+if(NOT DEFINED CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL)
+    set(CMAKE_MAP_IMPORTED_CONFIG_MINSIZEREL "MinSizeRel;Release")
+endif()
+if(NOT DEFINED CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO)
+    set(CMAKE_MAP_IMPORTED_CONFIG_RELWITHDEBINFO "RelWithDebInfo;Release")
+endif()
