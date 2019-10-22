@@ -5,6 +5,11 @@
 
 
 
+set(_CMAKE_CUMULATIVE_SETTING_diagnostics
+    "diagnostics-pedantic"
+    "diagnostics-paranoid"
+    "diagnostics-disable-annoying")
+
 list(APPEND _CMAKESHIFT_KNOWN_CUMULATIVE_SETTINGS
     "diagnostics")
 

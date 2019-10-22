@@ -187,12 +187,10 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS)
 
         # Is it a cumulative setting?
         if("${SETTING}" IN_LIST _CMAKESHIFT_KNOWN_CUMULATIVE_SETTINGS)
-            # Recur and suppress all settings that match the stem.
-            foreach(_SETTING IN LISTS _CMAKESHIFT_KNOWN_SETTINGS)
-                if(_SETTING MATCHES "^${SETTING}-[_A-Za-z0-9-]+=?$") # this includes settings with arguments, e.g. "cpu-architecture="
-                    cmakeshift_target_compile_setting_accumulate_(${TARGET_NAME} ${SCOPE} "no-${_SETTING}")
-                    set(_SUPPRESSED${_INTERFACE}_SETTINGS "${_SUPPRESSED${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
-                endif()
+            # Recur and suppress all settings included in the cumulative setting.
+            foreach(_SETTING IN LISTS _CMAKE_CUMULATIVE_SETTING_${SETTING})
+                cmakeshift_target_compile_setting_accumulate_(${TARGET_NAME} ${SCOPE} "no-${_SETTING}")
+                set(_SUPPRESSED${_INTERFACE}_SETTINGS "${_SUPPRESSED${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
             endforeach()
             return()
         endif()
@@ -266,13 +264,11 @@ function(CMAKESHIFT_TARGET_COMPILE_SETTINGS)
 
         # Is it a cumulative setting?
         if("${SETTING}" IN_LIST _CMAKESHIFT_KNOWN_CUMULATIVE_SETTINGS)
-            # Recur and set all settings that match the stem.
-            foreach(_SETTING IN LISTS _CMAKESHIFT_KNOWN_SETTINGS)
-                if(_SETTING MATCHES "^${SETTING}-[_A-Za-z0-9-]+$") # this implicitly skips settings with arguments, e.g. "cpu-architecture="
-                    cmakeshift_target_compile_setting_apply_(${TARGET_NAME} ${SCOPE} "${LB}${_SETTING}${RB}")
-                    set(_RAW_${_INTERFACE}_SETTINGS "${_RAW${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
-                    set(_CURRENT${_INTERFACE}_SETTINGS "${_CURRENT${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
-                endif()
+            # Recur and set all settings included by the cumulative setting.
+            foreach(_SETTING IN LISTS _CMAKE_CUMULATIVE_SETTING_${SETTING})
+                cmakeshift_target_compile_setting_apply_(${TARGET_NAME} ${SCOPE} "${LB}${_SETTING}${RB}")
+                set(_RAW_${_INTERFACE}_SETTINGS "${_RAW${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
+                set(_CURRENT${_INTERFACE}_SETTINGS "${_CURRENT${_INTERFACE}_SETTINGS}" PARENT_SCOPE)
             endforeach()
             return()
         endif()

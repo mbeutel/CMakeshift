@@ -5,6 +5,11 @@
 
 
 
+set(_CMAKE_CUMULATIVE_SETTING_runtime-checks
+    "runtime-checks-stack"
+    "runtime-checks-asan"
+    "runtime-checks-ubsan")
+
 list(APPEND _CMAKESHIFT_KNOWN_CUMULATIVE_SETTINGS
     "runtime-checks")
 

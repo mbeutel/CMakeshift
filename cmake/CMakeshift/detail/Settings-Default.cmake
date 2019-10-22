@@ -5,6 +5,21 @@
 
 
 
+set(_CMAKE_CUMULATIVE_SETTING_default
+    "default-base"
+    "default-experimental"
+    "default-output-directory"
+    "default-utf8-source"
+    "default-windows-unicode"
+    "default-triplet"
+    "default-conformance"
+    "default-debugjustmycode"
+    "default-debugdevicecode"
+    "default-shared"
+    "default-inlines-hidden"
+    "diagnostics-pedantic"
+    "diagnostics-paranoid")
+
 list(APPEND _CMAKESHIFT_KNOWN_CUMULATIVE_SETTINGS
     "default")
 
