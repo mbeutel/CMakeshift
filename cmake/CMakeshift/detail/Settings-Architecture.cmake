@@ -21,7 +21,7 @@ function(_CMAKESHIFT_SETTINGS_ARCHITECTURE)
         string(TOLOWER "${VAL}" ARCH)
 
         if(NOT ARCH STREQUAL "default" AND NOT ARCH STREQUAL "")
-        
+
             # FMA3 is available starting with Haswell, which is also the first to support AVX2.
             if(ARCH STREQUAL "skylake" OR ARCH STREQUAL "skylake-server" OR ARCH STREQUAL "skylake-server-avx512" OR ARCH STREQUAL "knl")
                 target_compile_definitions(${TARGET_NAME} ${SCOPE} "${LB}HAVE_FUSED_MULTIPLY_ADD=1${RB}")
@@ -31,17 +31,23 @@ function(_CMAKESHIFT_SETTINGS_ARCHITECTURE)
             endif()
 
             if(MSVC)
+                if(CMAKE_CXX_COMPILER_VERSION VERSION_GREATER_EQUAL 19.10)
+                    set(AVX512ARG "/arch:AVX512") # available since VS 2017
+                else()
+                    set(AVX512ARG "/arch:AVX2")
+                endif()
+                
+                if(ARCH STREQUAL "knl")
+                    target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/favor:ATOM${RB}")
+                else()
+                    target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/favor:INTEL64${RB}")
+                endif()
+                
                 if(ARCH STREQUAL "penryn")
-                    if(CMAKE_SIZEOF_VOID_P EQUAL 8) # compiling for x64
-                        target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/favor:INTEL64${RB}")
-                    endif()
-                elseif(ARCH STREQUAL "skylake" OR ARCH STREQUAL "skylake-server" OR ARCH STREQUAL "skylake-server-avx512")
+                elseif(ARCH STREQUAL "skylake")
                     target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/arch:AVX2${RB}")
-                    if(CMAKE_SIZEOF_VOID_P EQUAL 8) # compiling for x64
-                        target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/favor:INTEL64${RB}")
-                    endif()
-                elseif(ARCH STREQUAL "knl")
-                    target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/arch:AVX2${RB}" "${LB}${PASSTHROUGH}/favor:ATOM${RB}")
+                elseif(ARCH STREQUAL "skylake-server" OR ARCH STREQUAL "skylake-server-avx512" OR ARCH STREQUAL "knl")
+                    target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}${AVX512ARG}${RB}")
                 else()
                     set(_SETTING_SET FALSE PARENT_SCOPE)
                 endif()
