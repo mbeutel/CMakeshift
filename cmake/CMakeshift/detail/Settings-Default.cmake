@@ -10,6 +10,7 @@ set(_CMAKE_CUMULATIVE_SETTING_default
     "default-experimental"
     "default-output-directory"
     "default-utf8-source"
+    "default-windows-utf8-codepage"
     "default-windows-unicode"
     "default-triplet"
     "default-conformance"
@@ -28,6 +29,7 @@ list(APPEND _CMAKESHIFT_KNOWN_SETTINGS
     "default-experimental"
     "default-output-directory"
     "default-utf8-source"
+    "default-windows-utf8-codepage"
     "default-windows-unicode"
     "default-triplet"
     "default-conformance"
@@ -134,6 +136,25 @@ function(_CMAKESHIFT_SETTINGS_DEFAULT)
         # source files use UTF-8 encoding
         if(MSVC)
             target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/utf-8${RB}")
+        endif()
+
+    elseif(SETTING STREQUAL "default-windows-utf8-codepage")
+        # source files use UTF-8 encoding
+        if(MSVC)
+            get_target_property(_TARGET_TYPE ${TARGET_NAME} TYPE)
+            if(_TARGET_TYPE STREQUAL EXECUTABLE)
+                set(WINDOWS_SDK_VERSION "")
+                if(CMAKE_MT MATCHES "Windows Kits\/.*\/bin\/([^\/]+)\/")
+                    set(WINDOWS_SDK_VERSION "${CMAKE_MATCH_1}")
+                endif()
+                if(NOT WINDOWS_SDK_VERSION)
+                    message(WARNING "cmakeshift_target_compile_settings(): Cannot set UTF-8 codepage in manifest: Windows SDK directory not found (bug in CMakeshift? CMAKE_MT=${CMAKE_MT})")
+                elseif(WINDOWS_SDK_VERSION VERSION_LESS 10.0.18362.0) # Windows 10 1903 SDK
+                    message(WARNING "cmakeshift_target_compile_settings(): Cannot set UTF-8 codepage in manifest: Windows SDK too old (found ${WINDOWS_SDK_VERSION}, need at least 10.0.18362.0)")
+                else()
+                    target_sources(${TARGET_NAME} ${SCOPE} "${LB}${CMAKESHIFT_SCRIPT_DIR}/CMakeshift/detail/utf8.manifest${RB}")
+                endif()
+            endif()
         endif()
 
     elseif(SETTING STREQUAL "default-windows-unicode")

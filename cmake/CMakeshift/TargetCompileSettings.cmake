@@ -78,6 +78,7 @@ include(CMakeshift/detail/Settings-Other)
 #         default-experimental                      enable uncontroversial compiler improvements currently marked as experimental
 #         default-output-directory                  place executables and shared libraries in ${PROJECT_BINARY_DIR}
 #         default-utf8-source                       source files use UTF-8 encoding
+#         default-windows-utf8-codepage             set UTF-8 as default narrow codepage on Windows
 #         default-windows-unicode                   UNICODE and _UNICODE are defined on Windows
 #         default-triplet                           heed linking options of selected Vcpkg triplet
 #         default-conformance                       conformant behavior
