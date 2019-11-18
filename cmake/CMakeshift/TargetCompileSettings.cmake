@@ -78,7 +78,6 @@ include(CMakeshift/detail/Settings-Other)
 #         default-experimental                      enable uncontroversial compiler improvements currently marked as experimental
 #         default-output-directory                  place executables and shared libraries in ${PROJECT_BINARY_DIR}
 #         default-utf8-source                       source files use UTF-8 encoding
-#         default-windows-utf8-codepage             set UTF-8 as default narrow codepage on Windows
 #         default-windows-unicode                   UNICODE and _UNICODE are defined on Windows
 #         default-triplet                           heed linking options of selected Vcpkg triplet
 #         default-conformance                       conformant behavior
@@ -87,6 +86,7 @@ include(CMakeshift/detail/Settings-Other)
 #         default-shared                            export from shared objects is opt-in (via attribute or declspec)
 #         default-inlines-hidden                    do not export inline functions (non-conformant but usually sane, and may speed up build)
 #
+#     utf8-codepage                             set UTF-8 as default narrow codepage on Windows
 #   D hidden-inline                             do not export inline functions (non-conformant but usually sane, and may speed up build) (deprecated; use "default-inlines-hidden" instead)
 #
 #     diagnostics                               default diagnostic settings

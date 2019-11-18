@@ -10,7 +10,6 @@ set(_CMAKE_CUMULATIVE_SETTING_default
     "default-experimental"
     "default-output-directory"
     "default-utf8-source"
-    "default-windows-utf8-codepage"
     "default-windows-unicode"
     "default-triplet"
     "default-conformance"
@@ -29,7 +28,7 @@ list(APPEND _CMAKESHIFT_KNOWN_SETTINGS
     "default-experimental"
     "default-output-directory"
     "default-utf8-source"
-    "default-windows-utf8-codepage"
+    "utf8-codepage"
     "default-windows-unicode"
     "default-triplet"
     "default-conformance"
@@ -138,8 +137,8 @@ function(_CMAKESHIFT_SETTINGS_DEFAULT)
             target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/utf-8${RB}")
         endif()
 
-    elseif(SETTING STREQUAL "default-windows-utf8-codepage")
-        # source files use UTF-8 encoding
+    elseif(SETTING STREQUAL "utf8-codepage")
+        # set UTF-8 as default narrow codepage on Windows
         if(MSVC)
             get_target_property(_TARGET_TYPE ${TARGET_NAME} TYPE)
             if(_TARGET_TYPE STREQUAL EXECUTABLE)
