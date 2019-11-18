@@ -24,10 +24,14 @@ function(_CMAKESHIFT_SETTINGS_ARCHITECTURE)
 
             # FMA3 is available starting with Haswell, which is also the first to support AVX2.
             if(ARCH STREQUAL "skylake" OR ARCH STREQUAL "skylake-server" OR ARCH STREQUAL "skylake-server-avx512" OR ARCH STREQUAL "knl")
-                target_compile_definitions(${TARGET_NAME} ${SCOPE} "${LB}HAVE_FUSED_MULTIPLY_ADD=1${RB}")
+                set_target_properties(${TARGET_NAME}
+                    PROPERTIES CMAKESHIFT_ARCHITECTURE_HAVE_FUSED_MULTIPLY_ADD ${LB}TRUE${RB})
+                target_compile_definitions(${TARGET_NAME} ${SCOPE} "${LB}HAVE_FUSED_MULTIPLY_ADD=1${RB}") # TODO: remove
             endif()
             if(ARCH STREQUAL "skylake-server-avx512" OR ARCH STREQUAL "knl")
-                target_compile_definitions(${TARGET_NAME} ${SCOPE} "${LB}PREFER_AVX512=1${RB}")
+                set_target_properties(${TARGET_NAME}
+                    PROPERTIES CMAKESHIFT_ARCHITECTURE_PREFER_AVX512 ${LB}TRUE${RB})
+                target_compile_definitions(${TARGET_NAME} ${SCOPE} "${LB}PREFER_AVX512=1${RB}") # TODO: remove
             endif()
 
             if(MSVC)

@@ -37,6 +37,14 @@ define_property(TARGET
     PROPERTY CMAKESHIFT_SUPPRESSED_INTERFACE_COMPILE_SETTINGS
     BRIEF_DOCS "compile settings to be suppressed for target interface"
     FULL_DOCS "compile settings to be suppressed for target interface")
+define_property(TARGET
+    PROPERTY CMAKESHIFT_ARCHITECTURE_HAVE_FUSED_MULTIPLY_ADD
+    BRIEF_DOCS "determines if target architecture supports fused multiply--add instructions"
+    FULL_DOCS "determines if target architecture supports fused multiply--add instructions")
+define_property(TARGET
+    PROPERTY CMAKESHIFT_ARCHITECTURE_PREFER_AVX512
+    BRIEF_DOCS "determines if target architecture prefers AVX-512 instructions"
+    FULL_DOCS "determines if target architecture prefers AVX-512 instructions")
 
 
 include(CMakeshift/detail/Trace)
@@ -109,11 +117,17 @@ include(CMakeshift/detail/Settings-Other)
 #     skylake-server-avx512     generate code for Intel Core/Xeon "Skylake Server", prefer AVX-512 instructions
 #     knl                       generate code for Intel Xeon Phi "Knights Landing"
 #
-# For the architectures "skylake-server-avx512" and "knl", the compile definition "PREFER_AVX512=1"
-# is added. (TODO: is this a good idea?)
+# For the architectures "skylake-server-avx512" and "knl", the target property "CMAKESHIFT_ARCHITECTURE_PREFER_AVX512"
+# is set to TRUE. To make the target property accessible in source code, evaluate the target property in a generator
+# expression:
 #
-# For architectures which support fused multiply--add opcodes, the compile definition
-# "HAVE_FUSED_MULTIPLY_ADD=1" is added. (TODO: is this a good idea?)
+#     target_compile_definitions(<target> PRIVATE $<IF:$<GENEX_EVAL:$<TARGET_PROPERTY:CMAKESHIFT_ARCHITECTURE_PREFER_AVX512>>PREFER_AVX512>)
+#
+# For architectures which support fused multiply--add opcodes, the target property
+# "CMAKESHIFT_ARCHITECTURE_HAVE_FUSED_MULTIPLY_ADD" is set to TRUE. To make the target property accessible in source
+# code, evaluate the target property in a generator expression:
+#
+#     target_compile_definitions(<target> PRIVATE $<IF:$<GENEX_EVAL:$<TARGET_PROPERTY:CMAKESHIFT_ARCHITECTURE_HAVE_FUSED_MULTIPLY_ADD>>HAVE_FUSED_MULTIPLY_ADD>)
 #
 # A project-wide default for the "cpu-architecture" setting can be set with the build option
 # "CPU_ARCHITECTURE" defined in CMakeshift/TargetArchitecture.cmake.
