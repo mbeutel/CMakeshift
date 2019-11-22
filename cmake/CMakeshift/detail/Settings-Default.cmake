@@ -11,7 +11,6 @@ set(_CMAKE_CUMULATIVE_SETTING_default
     "default-output-directory"
     "default-utf8-source"
     "default-windows-unicode"
-    "default-triplet"
     "default-conformance"
     "default-debugjustmycode"
     "default-debugdevicecode"
@@ -30,26 +29,11 @@ list(APPEND _CMAKESHIFT_KNOWN_SETTINGS
     "default-utf8-source"
     "utf8-codepage"
     "default-windows-unicode"
-    "default-triplet"
     "default-conformance"
     "default-debugjustmycode"
     "default-debugdevicecode"
     "default-shared"
     "default-inlines-hidden")
-
-
-if(_VCPKG_ROOT_DIR AND VCPKG_TARGET_TRIPLET)
-    include("${_VCPKG_ROOT_DIR}/triplets/${VCPKG_TARGET_TRIPLET}.cmake")
-
-    # set default library linkage according to selected triplet
-    if(VCPKG_LIBRARY_LINKAGE STREQUAL "dynamic")
-        set(BUILD_SHARED_LIBS ON CACHE BOOL "Build shared library")
-    elseif(VCPKG_LIBRARY_LINKAGE STREQUAL "static")
-        set(BUILD_SHARED_LIBS OFF CACHE BOOL "Build shared library")
-    else()
-        message(FATAL_ERROR "cmakeshift_target_compile_settings(): Invalid setting for VCPKG_LIBRARY_LINKAGE: \"${VCPKG_LIBRARY_LINKAGE}\". It must be \"static\" or \"dynamic\"")
-    endif()
-endif()
 
 
 if(NOT CMAKESHIFT_PERMIT_IN_SOURCE_BUILD)
@@ -159,51 +143,6 @@ function(_CMAKESHIFT_SETTINGS_DEFAULT)
     elseif(SETTING STREQUAL "default-windows-unicode")
         # UNICODE and _UNICODE are defined on Windows
         target_compile_definitions(${TARGET_NAME} ${SCOPE} "${LB}$<$<PLATFORM_ID:Windows>:UNICODE>${RB}" "${LB}$<$<PLATFORM_ID:Windows>:_UNICODE>${RB}")
-
-    elseif(SETTING STREQUAL "default-triplet")
-        # heed linking options of selected Vcpkg triplet
-        if(MSVC AND VCPKG_CRT_LINKAGE)
-            if(VCPKG_CRT_LINKAGE STREQUAL "dynamic")
-                set(_CRT_FLAG_DEBUG "/MDd")
-                set(_CRT_FLAG "/MD")
-                set(_DLL_FLAG "DLL")
-            elseif(VCPKG_CRT_LINKAGE STREQUAL "static")
-                get_target_property(_TARGET_TYPE ${TARGET_NAME} TYPE)
-                if(${_TARGET_TYPE} STREQUAL SHARED_LIBRARY)
-                    message(FATAL_ERROR "cmakeshift_target_compile_settings(): When building a shared library, VCPKG_CRT_LINKAGE must be set to \"dynamic\". Current setting is \"${VCPKG_CRT_LINKAGE}\"")
-                endif()
-                set(_CRT_FLAG_DEBUG "/MTd")
-                set(_CRT_FLAG "/MT")
-                set(_DLL_FLAG "")
-            else()
-                message(FATAL_ERROR "cmakeshift_target_compile_settings(): Invalid setting for VCPKG_CRT_LINKAGE: \"${VCPKG_CRT_LINKAGE}\". It must be \"static\" or \"dynamic\"")
-            endif()
-            
-            # use target property MSVC_RUNTIME_LIBRARY if possible
-            if(CMAKE_VERSION VERSION_GREATER_EQUAL 3.15)
-                set(_CRT_FLAG_DEBUG "")
-                set(_CRT_FLAG "")
-                set_target_properties(${TARGET_NAME} PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Debug>:Debug>${_DLL_FLAG}")
-            endif()
-
-            # replace dynamic library linking flags with the desired option
-            if(CMAKE_CXX_FLAGS_DEBUG MATCHES "/M(D|T)d")
-                string(REGEX REPLACE "/M(D|T)d" "${_CRT_FLAG_DEBUG}" CMAKE_CXX_FLAGS_DEBUG_NEW "${CMAKE_CXX_FLAGS_DEBUG}")
-                cmakeshift_update_cache_variable_(CMAKE_CXX_FLAGS_DEBUG "${CMAKE_CXX_FLAGS_DEBUG_NEW}")
-            endif()
-            if(CMAKE_CUDA_FLAGS_DEBUG MATCHES "/M(D|T)d")
-                string(REGEX REPLACE "/M(D|T)d" "${_CRT_FLAG_DEBUG}" CMAKE_CUDA_FLAGS_DEBUG_NEW "${CMAKE_CUDA_FLAGS_DEBUG}") # TODO: is this done right, with the quoted string in CMAKE_CUDA_FLAGS_*?
-                cmakeshift_update_cache_variable_(CMAKE_CUDA_FLAGS_DEBUG "${CMAKE_CUDA_FLAGS_DEBUG_NEW}")
-            endif()
-            if(CMAKE_CXX_FLAGS_RELEASE MATCHES "/M(D|T)")
-                string(REGEX REPLACE "/M(D|T)" "${_CRT_FLAG}" CMAKE_CXX_FLAGS_RELEASE_NEW "${CMAKE_CXX_FLAGS_RELEASE}")
-                cmakeshift_update_cache_variable_(CMAKE_CXX_FLAGS_RELEASE "${CMAKE_CXX_FLAGS_RELEASE_NEW}")
-            endif()
-            if(CMAKE_CUDA_FLAGS_RELEASE MATCHES "/M(D|T)")
-                string(REGEX REPLACE "/M(D|T)" "${_CRT_FLAG}" CMAKE_CUDA_FLAGS_RELEASE_NEW "${CMAKE_CUDA_FLAGS_RELEASE}") # TODO: is this done right, with the quoted string in CMAKE_CUDA_FLAGS_*?
-                cmakeshift_update_cache_variable_(CMAKE_CUDA_FLAGS_RELEASE "${CMAKE_CUDA_FLAGS_RELEASE_NEW}")
-            endif()
-        endif()
 
     elseif(SETTING STREQUAL "default-conformance")
         # configure compilers to be ISO C++ conformant

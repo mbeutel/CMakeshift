@@ -79,7 +79,6 @@ include(CMakeshift/detail/Settings-Other)
 #         default-output-directory                  place executables and shared libraries in ${PROJECT_BINARY_DIR}
 #         default-utf8-source                       source files use UTF-8 encoding
 #         default-windows-unicode                   UNICODE and _UNICODE are defined on Windows
-#         default-triplet                           heed linking options of selected Vcpkg triplet
 #         default-conformance                       conformant behavior
 #         default-debugjustmycode                   debugging convenience: "just my code"
 #         default-debugdevicecode                   generate debug information for CUDA device code; disables optimizations in device code
