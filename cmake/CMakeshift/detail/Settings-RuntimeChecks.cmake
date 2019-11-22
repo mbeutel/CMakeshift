@@ -37,13 +37,14 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
             if(CMAKE_CXX_FLAGS_RELWITHDEBINFO MATCHES "/ZI")
                 set(FLAG_COND "${FLAG_COND},$<CONFIG:RelWithDebInfo>")
             endif()
+            # TODO: this is a hardening measure, not a debugging aid; keep it separate
             target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}$<$<NOT:$<OR:${FLAG_COND}>>:/guard:cf>${RB}")
             target_link_libraries(${TARGET_NAME} ${SCOPE} "${LB}$<$<NOT:$<OR:${FLAG_COND}>>:-guard:cf>${RB}") # this flag also needs to be passed to the linker (CMake needs a leading '-' to recognize a flag here)
         endif()
 
         if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
             # enable stack protector
-            target_compile_options(${TARGET_NAME} PRIVATE "${LB}${PASSTHROUGH}-fstack-protector${RB}")
+            target_compile_options(${TARGET_NAME} PRIVATE "${LB}${PASSTHROUGH}-fstack-protector${RB}") # TODO: this is a hardening measure, not a debugging aid; keep it separate
         endif()
 
     elseif(SETTING STREQUAL "runtime-checks-asan")
