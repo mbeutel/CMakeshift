@@ -101,4 +101,13 @@ function(_CMAKESHIFT_SETTINGS_DIAGNOSTICS)
         set(_SETTING_SET FALSE PARENT_SCOPE)
     endif()
 
+    # TODO: add a setting for optimization reports, cf.
+    # https://software.intel.com/en-us/cpp-compiler-developer-guide-and-reference-qopt-report-qopt-report
+    # https://software.intel.com/en-us/cpp-compiler-developer-guide-and-reference-qopt-report-phase-qopt-report-phase
+    # https://docs.microsoft.com/en-us/cpp/build/reference/qvec-report-auto-vectorizer-reporting-level
+    # https://docs.microsoft.com/en-us/cpp/build/reference/qpar-report-auto-parallelizer-reporting-level
+    # https://clang.llvm.org/docs/ClangCommandLineReference.html#diagnostic-flags
+    # https://clang.llvm.org/docs/ClangCommandLineReference.html#cmdoption-clang-fsave-optimization-record
+    # https://gcc.gnu.org/onlinedocs/gcc/Developer-Options.html ("-fopt-info")
+
 endfunction()
