@@ -80,15 +80,19 @@ function(_CMAKESHIFT_SETTINGS_DIAGNOSTICS)
         # every error is fatal; stop after reporting first error
         if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
             target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}-fmax-errors=1${RB}")
+
         elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}-ferror-limit=1${RB}")
+
+        else()
+            message(WARNING "cmakeshift_target_compile_settings(): Setting \"fatal-errors\": Don't know how make compiler \"${CMAKE_CXX_COMPILER_ID}\" stop after first error")
         endif()
 
     elseif(SETTING STREQUAL "diagnostics-disable-annoying")
         # disable annoying warnings
         if(MSVC)
             # C4324 (structure was padded due to alignment specifier)
-            target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/wd4324${RB}")
+            target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}/wd4324${RB}") # TODO: remove
             # secure CRT warnings (e.g. "use sprintf_s rather than sprintf")
             target_compile_definitions(${TARGET_NAME} ${SCOPE} "${LB}_CRT_SECURE_NO_WARNINGS${RB}")
         endif()

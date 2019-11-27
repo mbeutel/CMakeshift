@@ -29,7 +29,7 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
             # VC++ already enables stack frame run-time error checking and detection of uninitialized values by default in debug builds
 
             # insert control flow guards
-            # Option "/ZI" (enable Edit & Continue) is incompatible with "/guard:cf", so suppress the latter if "/ZI" is present.
+            # Option "/ZI" (enable Edit & Continue) is incompatible with "/guard:cf", so suppress the latter if "/ZI" is present. (TODO: don't do this silently.)
             set(FLAG_COND "0")
             if(CMAKE_CXX_FLAGS_DEBUG MATCHES "/ZI")
                 set(FLAG_COND "${FLAG_COND},$<CONFIG:Debug>")
@@ -40,9 +40,7 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
             # TODO: this is a hardening measure, not a debugging aid; keep it separate
             target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}$<$<NOT:$<OR:${FLAG_COND}>>:/guard:cf>${RB}")
             target_link_libraries(${TARGET_NAME} ${SCOPE} "${LB}$<$<NOT:$<OR:${FLAG_COND}>>:-guard:cf>${RB}") # this flag also needs to be passed to the linker (CMake needs a leading '-' to recognize a flag here)
-        endif()
-
-        if(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
+        elseif(CMAKE_COMPILER_IS_GNUCC OR CMAKE_COMPILER_IS_GNUCXX)
             # enable stack protector
             target_compile_options(${TARGET_NAME} PRIVATE "${LB}${PASSTHROUGH}-fstack-protector${RB}") # TODO: this is a hardening measure, not a debugging aid; keep it separate
         endif()
@@ -67,6 +65,9 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
                     endif()
                 endif()
             endif()
+
+        else()
+            message(WARNING "cmakeshift_target_compile_settings(): Setting \"runtime-checks-asan\": Don't know how enable AddressSanitizer for compiler \"${CMAKE_CXX_COMPILER_ID}\"")
         endif()
 
     elseif(SETTING STREQUAL "runtime-checks-ubsan")
@@ -87,6 +88,9 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
                 target_compile_options(${TARGET_NAME} PRIVATE "${LB}${PASSTHROUGH}-fsanitize=undefined${RB}")
                 target_link_libraries(${TARGET_NAME} PRIVATE "${LB}-fsanitize=undefined${RB}")
             endif()
+
+        else()
+            message(WARNING "cmakeshift_target_compile_settings(): Setting \"runtime-checks-ubsan\": Don't know how enable UndefinedBehaviorSanitizer for compiler \"${CMAKE_CXX_COMPILER_ID}\"")
         endif()
 
     elseif(SETTING STREQUAL "debug-stdlib")
@@ -100,12 +104,15 @@ function(_CMAKESHIFT_SETTINGS_RUNTIME_CHECKS)
 
         elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             if("runtime-checks-ubsan" IN_LIST _CURRENT${_INTERFACE}_SETTINGS)
-                message(WARNING "cmakeshift_target_compile_settings(): Not enabling standard library debug mode for target \"${TARGET}\" because it uses UBSan, which is known to raise issues in libc++ debugging code.")
+                message(WARNING "cmakeshift_target_compile_settings(): Setting \"debug-stdlib\": Not enabling standard library debug mode for target \"${TARGET}\" because it uses UBSan, which is known to raise issues in libc++ debugging code.")
                 set(_SETTING_SET FALSE)
             else()
                 # enable libc++ debug mode
                 target_compile_definitions(${TARGET_NAME} PRIVATE "${LB}$<IF:$<CONFIG:Debug>,_LIBCPP_DEBUG=1,_LIBCPP_DEBUG=0>${RB}")
             endif()
+
+        else()
+            message(WARNING "cmakeshift_target_compile_settings(): Setting \"debug-stdlib\": Don't know how to enable library debug mode for compiler \"${CMAKE_CXX_COMPILER_ID}\"")
         endif()
     
     else()
