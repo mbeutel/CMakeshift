@@ -60,6 +60,10 @@ function(_CMAKESHIFT_SETTINGS_DIAGNOSTICS)
         elseif(CMAKE_CXX_COMPILER_ID MATCHES "Clang")
             # TODO: find out if the "-pedantic" issue for NVCC+GCC also exists for NVCC+Clang
             target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}-Wall${RB}" "${LB}${PASSTHROUGH}-Wextra${RB}" "${LB}${PASSTHROUGH}-Wpedantic${RB}" "${LB}${PASSTHROUGH}-Wdeprecated${RB}")
+
+        elseif(CMAKE_C_COMPILER MATCHES "icc.*$" OR CMAKE_CXX_COMPILER MATCHES "icpc.*$") # Intel compiler
+            target_compile_options(${TARGET_NAME} ${SCOPE} "${LB}${PASSTHROUGH}-Wall${RB}" "${LB}${PASSTHROUGH}-Wextra${RB}" "${LB}${PASSTHROUGH}-pedantic${RB}" "${LB}${PASSTHROUGH}-Wdeprecated${RB}")
+
         endif()
 
     elseif(SETTING STREQUAL "diagnostics-paranoid")
