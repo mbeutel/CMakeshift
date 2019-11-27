@@ -55,7 +55,7 @@ function(_CMAKESHIFT_SETTINGS_ARCHITECTURE)
                 else()
                     set(_SETTING_SET FALSE PARENT_SCOPE)
                 endif()
-            elseif(CMAKE_C_COMPILER MATCHES "icc.*$") # Intel compiler
+            elseif(CMAKE_C_COMPILER MATCHES "icc.*$" OR CMAKE_CXX_COMPILER MATCHES "icpc.*$") # Intel compiler
                 if(WIN32)
                     set(ARCHARG "/arch:")
                     set(ARCHARG2 "/arch:")
@@ -155,7 +155,7 @@ function(_CMAKESHIFT_SETTINGS_ARCHITECTURE)
                 else()
                     set(_SETTING_SET FALSE PARENT_SCOPE)
                 endif()
-            elseif(CMAKE_C_COMPILER MATCHES "icc.*$") # Intel compiler
+            elseif(CMAKE_C_COMPILER MATCHES "icc.*$" OR CMAKE_CXX_COMPILER MATCHES "icpc.*$") # Intel compiler
                 if(MODEL STREQUAL "strict" OR MODEL STREQUAL "consistent" OR MODEL STREQUAL "precise" OR MODEL STREQUAL "fast")
                     set(MODELARG ${MODEL})
                 elseif(MODEL STREQUAL "fastest")

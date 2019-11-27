@@ -74,7 +74,7 @@ function(CMAKESHIFT_TARGET_CONTRACT_MULTIPLY_ADD TARGETNAME CONTRACT)
         if(CONTRACT)
             target_compile_options(${TARGETNAME} PRIVATE "/fp:fast")
         endif()
-    elseif(CMAKE_C_COMPILER MATCHES "icc.*$") # Intel compiler
+    elseif(CMAKE_C_COMPILER MATCHES "icc.*$" OR CMAKE_CXX_COMPILER MATCHES "icpc.*$") # Intel compiler
         # ICC defaults to "-fp-model fast=1" which permits FMA fusing, as does "-fp-model precise".
         if(NOT CONTRACT)
             if(WIN32)
