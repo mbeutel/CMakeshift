@@ -3,18 +3,18 @@
 # Author: Moritz Beutel
 
 
-cmake_minimum_required(VERSION 3.15)
+cmake_minimum_required(VERSION 3.14)
 
 # Project definition
 project(CMakeshift
-    VERSION 3.7.2
+    VERSION 3.7.3
     LANGUAGES)
 
 # Build options
-option(BUILD_DOCUMENTATION "Build documentation" OFF)
+option(CMAKESHIFT_BUILD_DOCUMENTATION "Build documentation" OFF)
 
 # Targets
-if(BUILD_DOCUMENTATION)
+if(CMAKESHIFT_BUILD_DOCUMENTATION)
     add_subdirectory(doc)
 endif()
 
