@@ -3,11 +3,11 @@
 # Author: Moritz Beutel
 
 
-cmake_minimum_required(VERSION 3.14)
+cmake_minimum_required(VERSION 3.15)
 
 # Project definition
 project(CMakeshift
-    VERSION 3.7.0
+    VERSION 3.7.2
     LANGUAGES)
 
 # Build options
