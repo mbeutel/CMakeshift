@@ -15,7 +15,7 @@ set(SPHINX_SOURCE ${CMAKE_CURRENT_SOURCE_DIR})
 set(SPHINX_BUILD "${CMAKE_CURRENT_BINARY_DIR}/sphinx/CMakeshift")
 set(SPHINX_INDEX_FILE "${SPHINX_BUILD}/index.html")
 
-set(conf_copyright "Copyright 2018-2019 Moritz Beutel")
+set(conf_copyright "Copyright 2018-2020 Moritz Beutel")
 set(conf_docs "${PROJECT_SOURCE_DIR}/doc")
 set(conf_path "${CMAKE_CURRENT_SOURCE_DIR}")
 set(conf_version "${PROJECT_VERSION_MAJOR}.${PROJECT_VERSION_MINOR}")

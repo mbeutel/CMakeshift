@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.14)
 
 # Project definition
 project(CMakeshift
-    VERSION 3.7.3
+    VERSION 4.0.0
     LANGUAGES)
 
 # Build options
@@ -18,9 +18,13 @@ if(CMAKESHIFT_BUILD_DOCUMENTATION)
     add_subdirectory(doc)
 endif()
 
+list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
+find_package(CMakeshift ${CMakeshift_VERSION} MODULE EXACT REQUIRED)
+
 # Installation
 include(GNUInstallDirs) # for CMAKE_INSTALL_DATADIR
-include(cmake/CMakeshift/InstallBasicPackageFiles.cmake)
+message("CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
+include(CMakeshift/InstallBasicPackageFiles)
 set(CMakeshift_BUILD_DATADIR "${PROJECT_SOURCE_DIR}/cmake")
 set(CMakeshift_INSTALL_DATADIR "${CMAKE_INSTALL_DATADIR}/CMakeshift/cmake")
 install(
