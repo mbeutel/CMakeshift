@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.14)
 
 # Project definition
 project(CMakeshift
-    VERSION 3.8.0
+    VERSION 3.8.1
     LANGUAGES)
 
 # Build options
