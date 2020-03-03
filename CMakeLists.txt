@@ -12,6 +12,7 @@ project(CMakeshift
 
 # Build options
 option(CMAKESHIFT_BUILD_DOCUMENTATION "Build documentation" OFF)
+option(CMAKE_EXPORT_PACKAGE_REGISTRY "Export to user package registry" OFF)
 
 # Targets
 if(CMAKESHIFT_BUILD_DOCUMENTATION)
@@ -22,6 +23,7 @@ list(APPEND CMAKE_MODULE_PATH "${PROJECT_SOURCE_DIR}/cmake")
 find_package(CMakeshift ${CMakeshift_VERSION} MODULE EXACT REQUIRED)
 
 # Installation
+set(CMAKE_SIZEOF_VOID_P "") # suppresses warning about unknown target in GNUInstallDirs
 include(GNUInstallDirs) # for CMAKE_INSTALL_DATADIR
 message("CMAKE_MODULE_PATH: ${CMAKE_MODULE_PATH}")
 include(CMakeshift/InstallBasicPackageFiles)
@@ -34,3 +36,4 @@ cmakeshift_install_basic_package_files(CMakeshift
     ARCH_INDEPENDENT
     NO_EXPORT
     COMPATIBILITY SameMajorVersion)
+

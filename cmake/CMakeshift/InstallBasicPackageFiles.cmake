@@ -63,11 +63,16 @@
 # string is replaced with the code checking for the dependencies
 # specified by these two argument.
 #
+# If the ``ARCH_INDEPENDENT`` option is enabled, the installed package version
+# will be considered compatible even if it was built for a different
+# architecture than the requested architecture.
+#
 # Each file is generated twice, one for the build directory and one for
 # the installation directory.  The ``INSTALL_DESTINATION`` argument can be
 # passed to install the files in a location different from the default
-# one (``CMake`` on Windows, ``${CMAKE_INSTALL_LIBDIR}/cmake/${Name}``
-# on other platforms.  The ``EXPORT_DESTINATION`` argument can be passed to
+# one (``${CMAKE_INSTALL_DATADIR}/cmake/${Name}`` if the ``ARCH_INDEPENDENT``
+# option is enabled, ``${CMAKE_INSTALL_LIBDIR}/cmake/${Name}`` otherwise).
+# The ``EXPORT_DESTINATION`` argument can be passed to
 # generate the files in the build tree in a location different from the default
 # one (``CMAKE_BINARY_DIR``).  If this is a relative path, it is
 # considered relative to the ``CMAKE_CURRENT_BINARY_DIR`` directory.
@@ -93,10 +98,6 @@
 # command documentation.
 # If your project has more elaborate version matching rules, you will need to
 # write your own custom ConfigVersion.cmake file instead of using this macro.
-#
-# If the ``ARCH_INDEPENDENT`` option is enabled, the installed package version
-# will be considered compatible even if it was built for a different
-# architecture than the requested architecture.
 #
 # The ``<Name>Config.cmake`` file is generated using
 # :cmake:command:`configure_package_config_file`. The
@@ -212,7 +213,7 @@
 # ``install_basic_package_files()`` command.
 #=============================================================================
 # YCM - Extra CMake Modules for YARP and friends
-# Copyright 2013-2019 Istituto Italiano di Tecnologia (IIT)
+# Copyright 2013-2020 Istituto Italiano di Tecnologia (IIT)
 # Authors: Daniele E. Domenichelli <daniele.domenichelli@iit.it>
 # All rights reserved.
 # 
@@ -244,8 +245,6 @@
 # (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING IN ANY WAY OUT OF THE USE
 # OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 #=============================================================================
-# (To distribute this file outside of CMake, substitute the full
-#  License text for the above reference.)
 
 
 if(COMMAND cmakeshift_install_basic_package_files)
@@ -375,11 +374,10 @@ function(CMAKESHIFT_INSTALL_BASIC_PACKAGE_FILES _Name)
     endif()
   endif()
 
-  # FIXME CMake 3.7 use the same path
-  # FIXME Use ARCH_INDEPENDENT to choose destination
+  # If not set by the user, choose an adequate destination
   if(NOT DEFINED _IBPF_INSTALL_DESTINATION)
-    if(WIN32 AND NOT CYGWIN)
-      set(_IBPF_INSTALL_DESTINATION CMake)
+    if(_IBPF_ARCH_INDEPENDENT)
+      set(_IBPF_INSTALL_DESTINATION ${CMAKE_INSTALL_DATADIR}/cmake/${_Name})
     else()
       set(_IBPF_INSTALL_DESTINATION ${CMAKE_INSTALL_LIBDIR}/cmake/${_Name})
     endif()
@@ -408,7 +406,7 @@ function(CMAKESHIFT_INSTALL_BASIC_PACKAGE_FILES _Name)
   endif()
   # ENABLE_COMPATIBILITY_VARS can be enabled for projects still using targets
   if(DEFINED _targets AND NOT _IBPF_NO_COMPATIBILITY_VARS AND NOT _IBPF_ENABLE_COMPATIBILITY_VARS)
-    message(AUTHOR_WARNING "Compatibility variables are no longer generated. Use ENABLE_COMPATIBILITY_VARS to re-enable them (deprecated) or define them using either INCLUDE_FILE or INCLUDE_CONTENT (recommended).")
+    message(DEPRECATION "Compatibility variables are no longer generated. Use ENABLE_COMPATIBILITY_VARS to re-enable them (deprecated) or define them using either INCLUDE_FILE or INCLUDE_CONTENT (recommended).")
   endif()
 
   if(NOT DEFINED _IBPF_EXPORT_DESTINATION)
@@ -641,90 +639,14 @@ ${_compatibility_vars}
   if(DEFINED _IBPF_DEPENDENCIES)
     set(PACKAGE_DEPENDENCIES "#### Expanded from @PACKAGE_DEPENDENCIES@ by cmakeshift_install_basic_package_files() ####\n\ninclude(CMakeFindDependencyMacro)\n")
 
-    # FIXME When CMake 3.9 or greater is required, remove this madness and just
-    #       use find_dependency
-    if (CMAKE_VERSION VERSION_LESS 3.9)
-      string(APPEND PACKAGE_DEPENDENCIES "
-set(_${_Name}_FIND_PARTS_REQUIRED)
-if (${_Name}_FIND_REQUIRED)
-  set(_${_Name}_FIND_PARTS_REQUIRED REQUIRED)
-endif()
-set(_${_Name}_FIND_PARTS_QUIET)
-if (${_Name}_FIND_QUIETLY)
-  set(_${_Name}_FIND_PARTS_QUIET QUIET)
-endif()
-")
+    foreach(_dep ${_IBPF_DEPENDENCIES})
+      string(APPEND PACKAGE_DEPENDENCIES "find_dependency(${_dep})\n")
+    endforeach()
 
-      foreach(_dep ${_IBPF_DEPENDENCIES})
-        set(_match 0)
-        string(REGEX REPLACE "[ \n\t]+" ";" _dep_list "${_dep}")
-        list(LENGTH _dep_list _len)
-        if(_len EQUAL 1)
-          set(_match 0)
-        elseif(_len EQUAL 2)
-          list(GET _dep_list 1 _dep1)
-          if(NOT "${_dep1}" MATCHES "^[0-9][0-9\\.]*$")
-            set(_match 1)
-          endif()
-        elseif(_len EQUAL 3)
-          list(GET _dep_list 1 _dep1)
-          list(GET _dep_list 2 _dep2)
-          if((NOT "${_dep1}" MATCHES "^[0-9][0-9\\.]*$") OR (NOT "${_dep2}" STREQUAL "EXACT"))
-            set(_match 1)
-          endif()
-        else()
-          set(_match 1)
-        endif()
-
-        if(_match)
-          string(APPEND PACKAGE_DEPENDENCIES "find_package(${_dep} \${_${_Name}_FIND_PARTS_QUIET} \${_${_Name}_FIND_PARTS_REQUIRED})\n")
-        else()
-          string(APPEND PACKAGE_DEPENDENCIES "find_dependency(${_dep})\n")
-        endif()
-      endforeach()
-
-      if(_need_private_deps)
-        foreach(_dep ${_IBPF_PRIVATE_DEPENDENCIES})
-          set(_match 0)
-          string(REGEX REPLACE "[ \n\t]+" ";" _dep_list "${_dep}")
-          list(LENGTH _dep_list _len)
-          if(_len EQUAL 1)
-            set(_match 0)
-          elseif(_len EQUAL 2)
-            list(GET _dep_list 1 _dep1)
-            if(NOT "${_dep1}" MATCHES "^[0-9][0-9\\.]*$")
-              set(_match 1)
-            endif()
-          elseif(_len EQUAL 3)
-            list(GET _dep_list 1 _dep1)
-            list(GET _dep_list 2 _dep2)
-            if((NOT "${_dep1}" MATCHES "^[0-9][0-9\\.]*$") OR (NOT "${_dep2}" STREQUAL "EXACT"))
-              set(_match 1)
-            endif()
-          else()
-            set(_match 1)
-          endif()
-
-          if(_match)
-            string(APPEND PACKAGE_DEPENDENCIES "find_package(${_dep} \${_${_Name}_FIND_PARTS_QUIET} \${_${_Name}_FIND_PARTS_REQUIRED})\n")
-          else()
-            string(APPEND PACKAGE_DEPENDENCIES "find_dependency(${_dep})\n")
-          endif()
-        endforeach()
-      endif()
-
-    else()
-
-      foreach(_dep ${_IBPF_DEPENDENCIES})
+    if(_need_private_deps)
+      foreach(_dep ${_IBPF_PRIVATE_DEPENDENCIES})
         string(APPEND PACKAGE_DEPENDENCIES "find_dependency(${_dep})\n")
       endforeach()
-
-      if(_need_private_deps)
-        foreach(_dep ${_IBPF_PRIVATE_DEPENDENCIES})
-          string(APPEND PACKAGE_DEPENDENCIES "find_dependency(${_dep})\n")
-        endforeach()
-      endif()
-
     endif()
 
     string(APPEND PACKAGE_DEPENDENCIES "\n###############################################################################\n")
@@ -778,7 +700,10 @@ endif()
   # CMake >= 3.15 already checks for CMAKE_EXPORT_PACKAGE_REGISTRY in `export(PACKAGE)` (cf.
   # cf. https://cmake.org/cmake/help/latest/policy/CMP0090.html), and we effectively back-port
   # this behavior to earlier versions.
-  if(CMAKE_EXPORT_PACKAGE_REGISTRY OR NOT CMAKE_VERSION VERSION_LESS 3.15)
+  # Note that even never CMake versions may apply old policy behaviors if the consuming project
+  # requires a lower version of CMake (e.g. `cmake_minimum_required(VERSION 3.14)`), so the
+  # check for `CMAKE_EXPORT_PACKAGE_REGISTRY` is necessary for CMake >= 3.15 as well.
+  if(CMAKE_EXPORT_PACKAGE_REGISTRY)
     export(PACKAGE ${_Name})
   endif()
 
