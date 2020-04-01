@@ -17,7 +17,7 @@ include(FindPackageHandleStandardArgs)
 find_package_handle_standard_args(CUB
     REQUIRED_VARS CUB_INCLUDE_DIR)
 
-if(CUB_INCLUDE_DIR)
+if(CUB_FOUND)
     # Define a target only if none has been defined yet.
     if(NOT TARGET CUB::CUB)
         add_library(CUB::CUB INTERFACE IMPORTED)
