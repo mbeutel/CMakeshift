@@ -18,14 +18,14 @@ include(FindPackageHandleStandardArgs)
 
 if (NOT HSL_FIND_COMPONENTS)
     set(HSL_FIND_COMPONENTS mc64)
-    foreach (_hsl_component ${HSL_FIND_COMPONENTS})
+	foreach (_hsl_component IN LISTS HSL_FIND_COMPONENTS)
         set(HSL_FIND_REQUIRED_${_hsl_component} 1)
     endforeach()
 endif()
 
 find_library(GFORTRAN_LIB NAMES gfortran)
 
-foreach(_hsl_component ${HSL_FIND_COMPONENTS})
+foreach(_hsl_component IN LISTS HSL_FIND_COMPONENTS)
     find_library(_hsl_lib_${_hsl_component} NAMES "hsl_${_hsl_component}")
     find_path(_hsl_include_${_hsl_component} NAMES "hsl_${_hsl_component}s.h")
     set(_hsl_lib ${_hsl_lib_${_hsl_component}})
