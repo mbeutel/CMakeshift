@@ -36,12 +36,10 @@ foreach(_hsl_component ${HSL_FIND_COMPONENTS})
             add_library(HSL::${_hsl_component} UNKNOWN IMPORTED)
             list(APPEND HSL_IMPORTED_TARGETS HSL::${_hsl_component})
             set_target_properties(HSL::${_hsl_component} PROPERTIES
-                                  IMPORTED_CONFIGURATIONS       "RELEASE"
-                                  IMPORTED_LOCATION_RELEASE     "${_hsl_lib}"
+                                  IMPORTED_LOCATION     "${_hsl_lib}"
                                   INTERFACE_INCLUDE_DIRECTORIES "${_hsl_include_dir}")
             target_link_libraries(HSL::${_hsl_component} INTERFACE ${GFORTRAN_LIB} m)
         endif()
-        set(HSL_FOUND TRUE)
     endif()
     unset(_hsl_lib)
     unset(_hsl_include_dir)
