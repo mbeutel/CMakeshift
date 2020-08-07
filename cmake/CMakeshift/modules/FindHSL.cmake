@@ -1,13 +1,13 @@
-
 #.rst:
 # FindHSL
 # --------
 #
-# Find the HSL library.
+# Find the HSL Mathematical Software Library.
+# See http://www.hsl.rl.ac.uk/index.html
 #
 # This will define the following variables::
 #
-#   HSL_FOUND      - True if the HSL library was found
+#   HSL_FOUND      - True if the HSL was found
 #
 # and the following imported targets::
 #
