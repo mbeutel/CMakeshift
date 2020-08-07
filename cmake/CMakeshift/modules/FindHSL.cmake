@@ -18,7 +18,7 @@ include(FindPackageHandleStandardArgs)
 
 if (NOT HSL_FIND_COMPONENTS)
     set(HSL_FIND_COMPONENTS mc64)
-	foreach (_hsl_component IN LISTS HSL_FIND_COMPONENTS)
+    foreach (_hsl_component IN LISTS HSL_FIND_COMPONENTS)
         set(HSL_FIND_REQUIRED_${_hsl_component} 1)
     endforeach()
 endif()
