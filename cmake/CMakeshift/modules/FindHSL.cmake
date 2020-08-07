@@ -16,8 +16,6 @@
 
 include(FindPackageHandleStandardArgs)
 
-set(HSL_FOUND FALSE)
-
 if (NOT HSL_FIND_COMPONENTS)
     set(HSL_FIND_COMPONENTS mc64)
     foreach (_hsl_component ${HSL_FIND_COMPONENTS})
