@@ -33,7 +33,7 @@ foreach(_hsl_component ${HSL_FIND_COMPONENTS})
     if(_hsl_lib_${_hsl_component} AND _hsl_include_${_hsl_component})
         set(HSL_${_hsl_component}_FOUND 1)
         if(NOT TARGET HSL::${_hsl_component})
-            add_library(HSL::${_hsl_component} STATIC IMPORTED)
+            add_library(HSL::${_hsl_component} UNKNOWN IMPORTED)
             list(APPEND HSL_IMPORTED_TARGETS HSL::${_hsl_component})
             set_target_properties(HSL::${_hsl_component} PROPERTIES
                                   IMPORTED_CONFIGURATIONS       "RELEASE"
