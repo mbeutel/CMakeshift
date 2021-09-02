@@ -27,7 +27,7 @@ file(GLOB SPHINX_MANUAL_SOURCES "${conf_docs}/modules/*.rst")
 file(GLOB SPHINX_CMAKE_SOURCES "${PROJECT_SOURCE_DIR}/cmake/CMakeshift/*.cmake")
 add_custom_command(
     OUTPUT ${SPHINX_INDEX_FILE}
-    COMMAND ${SPHINX_EXECUTABLE}
+    COMMAND ${Sphinx_EXECUTABLE}
         -c ${CMAKE_CURRENT_BINARY_DIR}
         -b html ${SPHINX_SOURCE} ${SPHINX_BUILD}
     DEPENDS
