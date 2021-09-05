@@ -90,7 +90,7 @@
 #
 # The ``<Name>ConfigVersion.cmake`` file is generated using
 # :cmake:command:`write_basic_package_version_file`. The ``VERSION``,
-# ``COMPATIBILITY``, and ``ARCH_INDEPENDENT``arguments are passed to this
+# ``COMPATIBILITY``, and ``ARCH_INDEPENDENT`` arguments are passed to this
 # function.
 #
 # ``VERSION`` shall be in the form ``<major>[.<minor>[.<patch>[.<tweak>]]]]``.
